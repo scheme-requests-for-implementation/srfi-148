@@ -1,0 +1,1634 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+  <head>
+    <title>SRFI 148: Composable macros</title>
+    <link rel="stylesheet" href="http://srfi.schemers.org/srfi.css" type="text/css" />
+  </head>
+
+  <body>
+
+<h1>Title</h1>
+
+Composable macros    
+
+<h1>Author</h1>
+
+Marc Nieper-Wi&szlig;kirchen
+
+<h1>Abstract</h1>
+
+Writing powerful <code>syntax-rules</code> macros is hard because they
+do not compose well: The arguments of a macro expansion are not
+expanded.  This SRFI defines an easy to comprehend high-level system
+for writing powerful, composable macros, one of whose defining features is that
+it can be portably implemented in any Scheme implementation conforming
+to the R7RS.
+
+<h1>Issues</h1>
+
+<ul>
+<li><p>
+  Are there any essential ck-macros that should be added to this specification?
+  </p>
+</li>
+<li
+   ><p> Should we try hard and allow circular/dotted lists as
+    arguments to the pre-defined ck-macros where viable?
+  </p>
+</li>
+<li>
+  <p>
+  Should the references to the CK-machine be omitted in the
+  terminology of this SRFI?  For example, should we
+  rename <em>ck-macro</em> to composable macro throughout? In this
+  case: what would be a good prefix instead of <code>ck-</code> for
+  the predefined composable macros?
+  </p>
+</li>
+<li>
+  <p>Should the name of the essential macro <code>ck-expression</code>
+  be shortened, <i>e.g.</i> to a name consisting of an otherwise unused
+  character?
+  </p>
+</li>
+<li>
+  <p>Currently, this specification defines no way to define anonymous
+    macros (<em>i.e.</em> the equivalent to <code>lambda</code>).
+    Should this SRFI
+    define such a thing?  And, if this is the case, what
+    should be the exact semantics that work well with the idea of
+    lexical scoping and how pattern matching in Scheme macros work?
+  </p>
+</li>
+</ul>
+
+<h1>Rationale</h1>
+
+<p>
+  One defining aspect of the contemporary Scheme programming language
+  is the provision of a high-level hygienic macro system, which is
+  known as the <code>syntax-rules</code> macro system.
+  While <code>syntax-rules</code> makes it easy and very natural to
+  write simple macros &mdash; see, for example, the definition of the <code>and</code> form
+  in the R7RS &mdash;  writing more powerful macros, <em>e.g.</em> a portable hygienic
+  pattern matcher, soon looks like black art to many Scheme users.
+</p>
+
+<p>
+  The main reason for this is that
+  <code>syntax-rules</code>-macros do not compose well
+  due to the head-first rewriting system on which they are based: The
+  arguments of each macro use remain essentially unexpanded.
+</p>
+
+<p>
+  In order to discourage people from refraining from the beauty
+  of <code>syntax-rules</code> by employing unhygienic low-level macro
+  systems (or building on run-time evaluation when expansion at
+  compile-time would be beneficial to running time), this SRFI
+  defines a custom macro transformer
+  <code>ck-macro-transformer</code>, which allows to write composable
+  macros, while retaining the hygiene and beauty of <code>syntax-rules</code>.
+  This high-level system of composable macros is based on the idea of
+  CK-macros, which has
+  been <a href="http://okmij.org/ftp/Scheme/macros.html#ck-macros">popularized
+  by Oleg Kiselyov</a>.
+</p>
+
+<p>
+  There are at least three arguments in favor of standardizing a
+  system of composable macros based on <code>syntax-rules</code>.
+  Firstly, some standardization makes it simpler to understand and
+  share each other's (macro) code.  Secondly, by standardizing this
+  system, future additions to the standard in the form of primitive
+  ck-macros (<em>e.g.</em> a ck-macro keyword <code>ck-number?</code>
+  that can discern whether some syntax is a number literal or not) are
+  made possible, and can be used to improve the expressiveness
+  of <code>syntax-rules</code> while retaining hygiene.  Thirdly, it
+  makes very much sense to implement this proposal not as a portable
+  library on top of <code>syntax-rules</code>, but natively by a
+  Scheme implementation.
+</p>
+
+<h1>Examples</h1>
+
+<p>
+One should get a good feeling about how the macro facility presented
+in this SRFI is to be used by studying the implementations of the
+various predefined composable macros (see below), which are contained
+in a <a href="srfi/148.macros.scm">file of the sample implementation</a>.
+</p>
+
+<h2>Factorial</h2>
+
+<p>
+  Of course, an example involving the factorial must not be forgotten.
+  The following example produces a vector literal whose elements are
+  all 3! = 6 permutations of the list <code>(1 2 3)</code> at macro expansion
+  time.
+</p>
+
+<pre>
+ (ck-expression (ck-list-&gt;vector (ck-fact '(1 2 3))))
+</pre>
+
+<h2>The <code>letrec</code>-binding construct</h2>
+
+<p>The definition of <code>letrec</code> as given in the appendix 7.3
+  of the R7RS can be rewritten as a composable macro as follows:</p>
+
+<pre>
+ (define-syntax letrec
+   (ck-macro-transformer ()
+     ((letrec ((var1 init1) ...) body ...)
+      ((generate-temporaries) =&gt; '(temp1 ...))
+      '(let ((var1 &lt;undefined&gt;) ...)
+        (let ((temp1 init1) ...)
+            (set! var1 temp1)
+            ...
+            body ...)))))
+</pre>
+
+<h2>The <code>do</code>-iteration construct</h2>
+
+<p>The definition of <code>do</code> as given in the appendix 7.3
+  of the R7RS can be rewritten as a composable macro as follows without "using a trick":</p>
+
+<pre>
+ (define-syntax do
+   (ck-macro-transformer ()
+     ((do ((var init . step*) ...)
+          (test expr ...)
+        command ...)
+      `(letrec
+           ((loop (lambda (var ...)
+              (if test
+                (begin
+                  (if #f #f)
+                  expr ...)
+                (begin
+                  command
+                  ...
+                  (loop ,(ck-if (ck-null? 'step*)
+                                'var
+                                (ck-car 'step*)) 
+                        ...))))))
+         (loop init ...)))))
+</pre>
+
+<h2>Pattern matcher</h2>
+
+<p>
+  The following is a library implementing a very simple pattern patcher using the
+  macro facility described in this SRFI:
+</p>
+
+<pre>
+ (define-library (example simple-match)
+   (export simple-match)
+   (import (scheme base)
+           (srfi 2)
+           (srfi 148))
+   (begin
+     (define-syntax simple-match
+       (ck-macro-transformer ()
+	 ((simple-match expr (pattern . body) ...)
+	  (ck-expression
+	   `(call-with-current-continuation
+	     (lambda (return)
+	       (let ((e expr))
+		 (or (and-let* 
+			 ,(%compile-pattern 'pattern 'e)
+		       (call-with-values (lambda () . body) return))
+		     ...
+		     (error "does not match" expr)))))))))
+
+     (define-syntax %compile-pattern
+       (ck-macro-transformer ()
+	 ((%compile-pattern '() 'e)
+	  '(((null? e))))
+	 ((%compile-pattern '(pattern1 pattern2 ...) 'e)
+	  `(((not (null? e)))
+	    (e1 (car e))
+	    (e2 (cdr e))
+	    ,@(%compile-pattern 'pattern1 'e1)
+	    ,@(%compile-pattern '(pattern2 ...) 'e2)))
+	 ((%compile-pattern 'x 'e)
+	  (ck-if (ck-symbol? 'x)
+	    '((x e))
+	    '(((equal? x e)))))))))
+</pre>
+
+<p>
+  The simple matcher can then be used in a program or at a REPL as follows:
+</p>
+
+<pre>
+ (import (scheme base)
+         (example simple-match))
+
+ (simple-match 10
+  (10 'ten)
+  ((11 x) x))     &#x27f9; 'ten
+
+ (simple-match '(11 eleven)
+  (10 'ten)
+  ((11 x) x))     &#x27f9; 'eleven
+</pre>
+
+<h1>Specification</h1>
+
+<h2>Overview</h2>
+
+<p>
+A composable macro is a (hygienic) macro whose keyword is bound to a
+transformer specified by an instance
+of <code>ck-macro-transformer</code> instead of an instance
+of <code>syntax-rules</code>.  A transformer spec
+using <code>ck-macro-transformer</code> is very similar to the
+well-known <code>syntax-rules</code>, namely of one of the two forms:
+</p>
+
+<pre>
+ (ck-macro-transformer (&lt;literal&gt; ...) 
+   (&lt;ck-macro-rule ...&gt;))
+ (ck-macro-transformer &lt;ellipsis&gt; (&lt;literal&gt; ...) 
+   (&lt;ck-macro-rule ...&gt;))
+</pre>
+
+<p>
+  Each <code>&lt;ck-macro-rule&gt;</code> is also very similar to
+  a <code>&lt;syntax rule&gt;</code>, namely of one of the forms:
+</p>
+
+<pre>
+ ((&lt;pattern&gt; ...) &lt;pattern binding spec&gt; ... &lt;template&gt;)
+ ((&lt;pattern&gt; ... &lt;pattern&gt; &lt;ellipsis&gt; &lt;pattern&gt; ...) &lt;pattern binding spec&gt; ... &lt;template&gt;)
+</pre>
+
+<p>
+  When we forget about the <code>&lt;pattern binding spec&gt;</code>s for a moment,
+  the difference between a composable macro and
+  a <code>syntax-rules</code>-macro lies in how the input elements
+  corresponding to the <code>&lt;pattern&gt;</code>s above are expanded
+  before a macro use is expanded: <code>syntax-rules</code>-macros
+  never expand their arguments before evaluation.  On the other
+  hand, <code>ck-macro-transformer</code> macros expand those input
+  elements whose corresponding patterns are of the
+  form <code>'&lt;pattern&gt;</code>, where the expansion of quoted
+  input elements is the input element itself, just as in the case of
+  evaluation of quoted datums.
+</p>
+
+<p>
+  For example, the following expression evaluates to 42:
+</p>
+
+<pre>
+ (letrec-syntax
+     ((foo (ck-macro-transformer ()
+             ((foo 'a) (bar 'a))))
+      (bar (ck-macro-transformer ()
+             ((bar 'a) '(define a 42))))
+      (baz (ck-macro-transformer ()
+             ((baz ignore 'a) 'a))))
+   (foo (baz (not-expanded) 'a))
+   a)
+</pre>
+
+<p>One more extension when compared with
+  ordinary <code>syntax-rules</code>s macros is available, namely the
+  <code>&lt;pattern binding spec&gt;</code>s, which are of the form:
+</p>
+
+<pre>
+ (&lt;template&gt; =&gt; &lt;pattern&gt;)
+</pre>
+
+<p>
+  These work as follows: Before the final template in a ck-macro use
+  is expanded, the pattern variables in <code>&lt;pattern&gt;</code>
+  are bound according to the expansion
+  of <code>&lt;template&gt;</code> (which may contain pattern
+  variables introduced earlier) and are available in subsequent
+  templates.
+</p>
+
+<p>
+  The following examples evaluates to the list <code>((1 x) (2 x) (3 x))</code>.
+</p>
+
+<pre>
+ (letrec-syntax
+     ((foo (ck-macro-transformer ()
+             ((foo 'x) ((bar 'x) =&gt; '(b c)) '(define x '(b (2 x) c)))))
+      (bar (ck-macro-transformer ()
+             ((bar 'x) '((1 x) (3 x))))))
+   (foo 'x)
+   x)
+</pre>
+
+<h2>Syntax</h2>
+
+<p>
+This SRFI extends 7.1 of the R7RS as follows:
+</p>
+
+<pre>
+ &lt;transformer spec&gt;
+   &xrarr; (ck-macro-transformer (&lt;identifier&gt; ...) &lt;ck-macro rule&gt; ...)
+   &xrarr; (ck-macro-transformer &lt;ellipsis&gt; (&lt;identifier&gt; ...) &lt;ck-macro rule&gt; ...)
+
+ &lt;ck-macro rule&gt;
+   &xrarr; (&lt;top-level pattern&gt; &lt;pattern binding spec&gt; ... &lt;top-level template&gt;)
+
+ &lt;pattern binding spec&gt;
+   &xrarr; (&lt;template&gt; =&gt; &lt;top-level pattern element&gt;)
+
+ &lt;top-level pattern&gt;
+   &xrarr; (&lt;identifier&gt; &lt;top-level pattern element&gt; ...)
+   &xrarr; (&lt;identifier&gt; &lt;top-level pattern element&gt; ... &lt;top-level pattern element&gt;
+      &lt;ellipsis&gt; &lt;top-level pattern element&gt;)
+
+ &lt;top-level template&gt;
+   &xrarr; &lt;quoted template&gt;
+   &xrarr; &lt;template&gt;
+
+ &lt;top-level pattern element&gt;
+   &xrarr; &lt;quoted pattern&gt;
+   &xrarr; &lt;quasiquoted pattern&gt;
+   &xrarr; &lt;pattern&gt;
+
+ &lt;quoted pattern&gt;
+   &xrarr; '&lt;pattern&gt;
+
+ &lt;quasiquoted pattern&gt;
+   &xrarr; `&lt;pattern&gt;
+ 
+ &lt;quoted template&gt;
+   &xrarr; '&lt;template&gt;
+
+ &lt;macro use&gt;
+   &xrarr; &lt;ck-macro use&gt;
+
+ &lt;ck-macro use&gt;
+   &xrarr; (&lt;keyword&gt; &lt;ck-macro datum&gt; ...)
+   &xrarr; (ck-expression (&lt;keyword&gt; &lt;ck-macro datum&gt; ...))
+ 
+ &lt;ck-macro datum&gt;
+   &xrarr; &lt;quoted datum&gt;
+   &xrarr; &lt;quasiquoted datum&gt;
+   &xrarr; &lt;ck-macro use&gt;
+   &xrarr; &lt;datum&gt;
+
+ &lt;quoted datum&gt;
+   &xrarr; '&lt;datum&gt;
+
+ &lt;quasiquoted datum&gt;
+   &xrarr; `&lt;datum&gt;
+
+ &lt;slot or ck-macro datum&gt;
+   &xrarr; &lt;&gt;
+   &xrarr; &lt;ck-macro datum&gt;
+</pre>
+
+<h2>Auxiliary syntax</h2>
+
+<p><code>=&gt;</code></p>
+<p><code>...</code></p>
+<p><code>&lt;&gt;</code></p>
+
+<p>
+The bindings of these three identifiers coincide with the bindings of
+these identifiers as exported
+from <code>(scheme base)</code> and <a href="http://srfi.schemers.org/srfi-26/srfi-26.html">SRFI
+  26</a>, respectively.
+</p>
+
+<p>
+  <i>Note: SRFI 26 was finalized long before the current standard,
+  R7RS, came into being.  By the way literal identifiers in
+  transformers are matched in R7RS and auxiliary syntax is handled in
+  R7RS, the identifier <code>&lt;&gt;</code>
+  (and <code>&lt;...&gt;</code>) should really be bound by SRFI 26 when
+  SRFI 26 is used in an R7RS system.  (The sample implementation of
+  this SRFI &mdash; see below &mdash; includes such an implementation
+  of SRFI 26.)
+  </i>
+</p>
+
+<h2>Semantics</h2>
+
+<p>
+  Keywords bound to a transformer specified by an
+  instance of <code>ck-macro-transformer</code> define keywords
+  for <em>ck-macros</em>.
+</p>
+ 
+<p>
+  Instances of a ck-macro have one of the following forms:
+</p>
+
+<pre>
+(&lt;keyword&gt; &lt;ck-macro datum&gt; ...)
+</pre>
+
+<pre>
+(ck-expression (&lt;keyword&gt; &lt;ck-macro datum&gt; ...))
+</pre>
+
+<p>Here, &lt;keyword&gt; is a keyword for a ck-macro.  The former form
+has to be used in definition contexts, the latter when the macro use
+expands into an expression (see also below).</p>
+
+<p>
+The syntax and semantics of the <code>&lt;ck-macro rule&gt;</code>s
+together with the (optional) specification
+of <code>&lt;ellipsis&gt;</code> and the <code>&lt;literal&gt;</code>s
+are as in the case of a <code>syntax-rules</code> transformer spec with
+the following exceptions and additions:
+</p>
+
+<ul>
+  <li>
+    <p>
+    <code>quote</code> is not allowed to appear in the
+    <code>&lt;literal&gt;</code>s. It is considered auxiliary syntax
+    that is always interpreted as a literal identifier.
+    </p>
+  </li>
+  <li>
+    <p>
+    A top-level pattern must be a list pattern without a dotted
+    tail. (No expressive power is lost because at top-level, every
+    pattern with a dotted tail can be rewritten, together with the
+    corresponding template, into a proper list pattern by making use
+    of the <code>&lt;ellipsis&gt;</code>).
+    </p>
+  </li>
+  <li>
+    <p>
+    A <code>&lt;pattern&gt;</code> occurring in the list of top-level
+    patterns can also be a <em>quoted pattern</em>, that is a pattern
+    of the form <code>'&lt;pattern&gt;</code>.  A quoted pattern does
+    not count as a list pattern.
+    </p>
+  </li>
+  <li>
+    <p>
+    It is an error if there are two rules such that there is a quoted
+    pattern in one rule and a list pattern at the same position in the
+    other rule.
+    </p>
+  </li>
+  <li>
+    <p>
+    A quoted pattern <code>'&lt;pattern&gt;</code> matches an input
+    element if and only if the input element is a ck-macro use and the
+    corresponding pattern <code>&lt;pattern&gt;</code> matches the
+    result of the expansion of the ck-macro use, or if it is a quoted
+    datum (or a self-quoting syntax element; see below) and the
+    pattern <code>&lt;pattern&gt;</code> matches the expression, or if
+    it is a quasiquoted datum and the
+    pattern <code>&lt;pattern&gt;</code> matches the expansion of the
+    quasiquoted datum (see below).  In other words, unquoted arguments
+    (or unquotated elements in quasiquoted arguments) to quoted patterns that
+    are ck-macro uses are expanded before they are matched
+    (<em>call-by-value</em> semantics, different from
+    the <em>call-by-reference</em> semantics of
+    ordinary <code>syntax-rules</code>-macros).
+    </p>
+  </li>
+  <li>
+    <p>
+    A top-level <code>&lt;template&gt;</code> can also be a <em>quoted
+      template</em>, that is a template of the
+      form <code>'&lt;template&gt;</code>, or a <em>quasiquoted
+      template</em>, that is a template of the
+      form <code>`&lt;template&gt;</code>.  A quoted template or
+      quasiquoted template at top-level does not count as a list
+      template.
+    </p>
+  </li>
+  <li>
+    <p>
+    If the top-level template is a quoted
+    template <code>'&lt;template&gt;</code>, the macro use is expanded
+    as if it was a <code>syntax-rules</code> macro
+    with <code>&lt;template&gt;</code> as the top-level template.
+    </p>
+    <p>
+      If the top-level template is a quasiquoted
+      template <code>`&lt;template&gt;</code>, the macro use is
+      expanded as if it was a <code>syntax-rules</code> macro
+      with <code>&lt;template&gt;</code> as the top-level template.
+      However, unquoted template elements, that is template elements
+      of the form <code>,&lt;template element&gt;</code>, inside the
+      quasiquoted template are expanded first and are handled as if
+      they are an unquoted top-level template of a ck-macro (see
+      below).  <code>Unquote-splicing</code> and nested
+      quasiquotations are handled analogously to quasiquotation in the
+      core Scheme language.
+    </p>
+  </li>
+  <li>
+    <p>
+      If the top-level template is an unquoted
+      template <code>&lt;template&gt;</code>, the macro use is
+      expanded as if it was a <code>syntax-rules</code> macro.  It is
+      an error if the expanded output is not a composable macro use
+      (or a self-quoting syntax element; see below).
+    </p>
+  </li>
+  <li>
+    <p>Syntax elements that are not proper lists are self-quoting.
+      Whenever they appear as input or output elements of ck-macros where
+      a quoted syntax element is expected, they are implicitely quoted.
+    </p>
+  </li>
+  <li>
+    <p>
+      A ck-macro use is only allowed in definition contexts, except when
+      the macro use or top-level template of the macro is wrapped
+      into <code>ck-expression</code> (see also below) and does expand in an
+      expression.
+    </p>
+  </li>
+  <li>
+    <p>
+      When <code>&lt;pattern binding spec&gt;</code>s appear in a
+      ck-macro rule that is matched, the <code>&lt;pattern binding
+      spec&gt;</code>s are processed in left-to-right order before the final
+      template of the rule is expanded: For each pattern binding
+      spec <code>(&lt;template&gt; =&gt; &lt;top-level pattern
+      element&gt;)</code>, the <code>&lt;template&gt;</code> is
+      expanded according to the above rules and matched against
+      the <code>&lt;top-level pattern element&gt;</code>.  The pattern
+      variables introduced by the <code>&lt;top-level pattern
+      element&gt;</code> are available in subsequent templates.  It is
+      an error if the <code>&lt;top-level pattern element&gt;</code>
+      does not match or if a pattern variable is introduced more than once.
+    </p>
+  </li>
+</ul>
+
+<h2>CK-macros</h2>
+
+<p>
+  In this subsection, all predefined ck-macros are listed.  It is
+  not specified whether these macros are able to deal with circular lists and vectors.
+</p>
+
+<h3>Index</h3>
+
+<ul>
+  <li><a href="#General">General</a>: ck-expression, ck-cut, ck-cute,
+  ck-constant, ck-quote, ck-eval, ck-apply, ck-call, ck-error,
+  ck-gensym, ck-generate-temporaries</li>
+  <li><a href="#Booleanlogic">Boolean logic</a>: ck-if, ck-not, ck-or,
+  ck-and, ck-null?, ck-pair?, ck-list?, ck-boolean?, ck-vector?,
+  ck-symbol?, ck-bound-identifier=?, ck-free-identifier=?,
+  ck-equal?</li>
+  <li><a href="#Listprocessing">List processing</a>: ck-cons,
+  ck-cons*, ck-list, ck-make-list, ck-car, ck-cdr, ck-caar, ck-cadr,
+  ck-cdar, ck-cddr, ck-first, ck-second, ck-third, ck-forth, ck-fifth,
+  ck-sixth, ck-seventh, ck-eighth, ck-ninth, ck-tenth, ck-list-tail,
+  ck-list-ref, ck-take, ck-drop, ck-take-right, ck-drop-right,
+  ck-last, ck-last-pair, ck-append, ck-reverse, ck-fold,
+  ck-fold-right, ck-unfold, ck-unfold-right, ck-map, ck-append-map,
+  ck-filter, ck-remove, ck-find, ck-find-tail, ck-take-while,
+  ck-drop-while, ck-any, ck-every, ck-member, ck-assoc,
+  ck-alist-delete, ck-set&lt;=, ck-set=, ck-set-adjoin, ck-set-union,
+  ck-set-intersection, ck-set-difference, ck-set-xor</li>
+  <li><a href="#Vectorprocessing">Vector processing</a>: ck-vector,
+  ck-list-&gt;vector, ck-vector-&gt;list, ck-vector-map, ck-vector-ref</li>
+  <li><a href="#Combinatorics">Combinatorics</a>: ck-0, ck-1, ck-2,
+  ck-3, ck-4, ck-5, ck-6, ck-7, ck-8, ck-9, ck-10, ck-=, ck-&lt;, ck-&lt;=,
+  ck-&gt;, ck-&gt;=, ck-zero?, ck-even?, ck-odd?, ck-+, ck--, ck-*,
+  ck-quotient, ck-remainder, ck-fact, ck--binom</li>
+</ul>
+
+<h3 id="General">General</h3>
+
+<p><code>(ck-expression &lt;ck-macro use&gt;)</code></p>
+
+<p>Expands into the expansion of &lt;ck-macro use&gt; with the
+  additional property that it is allowed in an expression context.  It
+  is an error if &lt;ck-macro use&gt; does not expand into a
+  expression.</p>
+
+<p><i>Rationale: That ck-macro uses that expand into expressions have
+    to be wrapped in <code>ck-expression</code>-forms is to ensure
+    that this SRFI can be portably implemented.  If Scheme had
+    a <code>let(rec)-syntax</code> form that spliced its body into the
+    outer scope, this auxiliary <code>ck-expression</code> wouldn't be necessary.</i>
+</p>
+
+<p><code>(ck-cut &lt;slot or ck-macro datum&gt;<sub>1</sub> &lt;slot or
+ck-macro datum&gt;<sub>2</sub> ...)</code></p>
+
+<p><code>(ck-cut &lt;slot or ck-macro datum&gt;<sub>1</sub> &lt;slot or
+ck-macro datum&gt;<sub>2</sub> ... &lt;&gt; &lt;ellipsis&gt;)</code></p>
+
+<p>
+  Expands into a ck-macro that accepts as much input elements as there are slots (elements of the form
+  <code>&lt;&gt;</code>) amongst the <code>&lt;ck-macro
+    datum&gt;</code>s.  When this ck-macro is used, it expands into the expansion of
+  <code>(&lt;slot or ck-macro datum&gt;<sub>1</sub> &lt;slot or
+    ck-macro datum&gt;<sub>2</sub>)</code> where the slots are
+    replaced by its input elements in order.  In case of the second
+    syntax with <code>(... &lt;&gt; &lt;ellipsis&gt;)</code>, the
+    resulting ck-macro takes a variable number of extra input elements
+    that are spliced in place of the sequence <code>&lt;&gt;
+    &lt;ellipsis&gt</code>.  (The semantics are analogous to the
+    semantics of the <code>cut</code> macro
+    of <a href="srfi.schemers.org/srfi-26/srfi-26.html">SRFI 26</a>,
+    except for that <code>&lt;...&gt;</code> is replaced by the
+    sequence <code>&lt;&gt; &lt;ellipsis&gt;</code>, which would not
+    have been possible to implement when SRFI 26 was finalized).  It
+    is an error to use <code>ck-cut</code> standalone, that is, not as
+    an input or output element of a ck-macro.
+</p>
+
+<p><code>(ck-cute &lt;slot or ck-macro datum&gt;<sub>1</sub> &lt;slot or
+ck-macro datum&gt;<sub>2</sub> ...)</code></p>
+
+<p><code>(ck-cute &lt;slot or ck-macro datum&gt;<sub>1</sub> &lt;slot or
+ck-macro datum&gt;<sub>2</sub> ... &lt;&gt; &lt;ellipsis&gt;)</code></p>
+
+<p>
+  Analogous to the <code>ck-cut</code>-macro uses, except that the non-slot 
+  <code>&lt;slot or ck-macro datum&gt;</code>s are expanded when
+  the <code>ck-cute</code>-macro use is expanded, not when the
+  resulting ck-macro is expanded.
+  (The semantics are analogous to the semantics of
+    the <code>cute</code> macro
+  of <a href="srfi.schemers.org/srfi-26/srfi-26.html">SRFI 26</a>).
+  It is an error to use <code>ck-cute</code> standalone, that is, not
+  as an input or output element of a ck-macro.
+</p>
+
+<p><i>Rationale: While the <code>cut</code> and <code>cute</code>
+    macros of SRFI 26 are not really essential for coding in Scheme
+    because Scheme has closures, there is no such thing as closures of
+    ck-macros.  However, <code>ck-cut</code>
+    and <code>ck-cute</code> can be used to emulate closures.
+  </i>
+</p>
+
+<p><code>(ck-constant &lt;constant&gt;)</code></p>
+
+<p>
+  Expands into a ck-macro that accepts an arbitrary number of input
+  elements and that always expands into the expansion of &lt;constant&gt;.
+
+  It
+  is an error to use <code>ck-constant</code> standalone, that is, not as
+  an input or output element of a ck-macro.
+</p>
+
+<p><code>(ck-quote &lt;ck-macro datum&gt;)</code></p>
+
+<p>Expands into the quotation of the expansion of the <code>&lt;ck-macro datum&gt;</code>.</p>
+
+<p><code>(ck-eval &lt;ck-macro datum&gt;)</code></p>
+
+<p>Expands into the expansion of the expansion of &lt;ck-macro datum&gt;.</p>
+
+<p><code>(ck-apply &lt;ck-macro datum&gt;<sub>1</sub> &lt;ck-macro datum&gt;... &lt;ck-macro datum&gt;<sub>2</sub>)</code></p>
+
+<p>Semantically equivalent to:</p>
+
+<pre>
+ (ck-append (ck-list &lt;ck-macro datum&gt;<sub>1</sub> &lt;ck-macro datum&gt; ...) &lt;ck-macro datum&gt;<sub>2</sub>)
+</pre>
+
+<p>It is an error if <code>&lt;ck-macro datum&gt;<sub>2</sub></code> does not expand into a list.</p>
+
+<p><code>(ck-call &lt;macro&gt; &lt;input&gt; ...)</code></p>
+
+<p>Semantically equivalent to:</p>
+
+<pre>
+ (ck-apply &lt;macro&gt; &lt;input&gt; ... '())
+</pre>
+
+<p><code>(ck-error &lt;message&gt; &lt;argument&gt; ...)</code></p>
+
+<p>Expands into a syntax error whose message is the expansion
+  of <code>&lt;message&gt;</code> and whose
+  arguments are the expansions of the <code>&lt;argument&gt;</code>s.
+</p>
+
+<p><code>(ck-gensym)</code></p>
+
+<p>Expands into a fresh identifier that is
+  not <code>ck-bound-identifier=?</code> (see below) to any existing
+  already existing identifier.
+</p>
+
+<p><code>(ck-generate-temporaries &lt;list&gt;)</code></p>
+
+<p>Expands into a list of pairwise different (in the sense of <code>bound-identifier=?</code>)
+  identifiers whose length is the number of elements in the expansion of <code>&lt;list&gt;</code>
+  It is an error if <code>&lt;list&gt;</code> does not expand into a list.
+</p>
+
+<h3 id="Booleanlogic">Boolean logic</h3>
+
+<p><code>(ck-if &lt;ck-macro datum&gt;<sub>1</sub> &lt;ck-macro datum&gt;<sub>2</sub> &lt;ck-macro datum&gt;<sub>3</sub>)</code></p>
+
+<p>Expands into the expansion of <code>&lt;ck-macro datum&gt;<sub>2</sub></code> if
+  <code>&lt;ck-macro datum&gt;<sub>1</sub></code> does not expand
+  into <code>#f</code>, and into the expansion of <code>&lt;ck-macro
+    datum&gt;<sub>3</sub></code> otherwise.
+</p>
+
+<p><code>(ck-not &lt;ck-macro datum&gt;)</code></p>
+
+<p>Expands into <code>#f</code> if <code>&lt;ck-macro datum&gt;</code>
+does not expand into <code>#f</code>, and into <code>#t</code> otherwise.
+</p>
+
+<p><code>(ck-or &lt;ck-macro datum&gt;)</code></p>
+
+<p>Expands into the expansion of the first <code>&lt;ck-macro
+    datum&gt;</code> (in left-to-right order) that does not expand
+    into <code>#f</code>, and does not expand any
+    later <code>&lt;ck-macro datum&gt;</code>s; expands
+    into <code>#f</code> if all <code>&lt;ck-macro datum&gt;</code>s
+    expand into <code>#f</code>.
+</p>
+
+<p><code>(ck-and &lt;ck-macro datum&gt;)</code></p>
+
+<p>Expands into the expansion of the last <code>&lt;ck-macro
+    datum&gt;</code> (in left-to-right order) if all previous
+    later <code>&lt;ck-macro datum&gt;</code>s do not expand
+    into <code>#f</code>, and does not expand any <code>&lt;ck-macro
+    datum&gt;</code>s after the first that expands
+    into <code>#f</code>; expands into <code>#f</code> otherwise.
+</p>
+
+<p><code>(ck-null? &lt;ck-macro datum&gt;)</code></p>
+
+<p>Expands into <code>#t</code> if <code>&lt;ck-macro datum&gt;</code>
+expands into the empty list, and into <code>#f</code>, otherwise.
+</p>
+
+<p><code>(ck-pair? &lt;ck-macro datum&gt;)</code></p>
+
+<p>Expands into <code>#t</code> if <code>&lt;ck-macro datum&gt;</code>
+expands into a pair, and into <code>#f</code>, otherwise.
+</p>
+
+
+<p><code>(ck-list? &lt;ck-macro datum&gt;)</code></p>
+
+<p>Expands into <code>#t</code> if <code>&lt;ck-macro datum&gt;</code>
+expands into a (proper) list, and into <code>#f</code>, otherwise.
+</p>
+
+<p><code>(ck-boolean? &lt;ck-macro datum&gt;)</code></p>
+
+<p>Expands into <code>#t</code> if <code>&lt;ck-macro datum&gt;</code>
+expands into a boolean literal, and into <code>#f</code>, otherwise.
+</p>
+
+<p><code>(ck-vector? &lt;ck-macro datum&gt;)</code></p>
+
+<p>Expands into <code>#t</code> if <code>&lt;ck-macro datum&gt;</code>
+expands into a vector literal, and into <code>#f</code>, otherwise.
+</p>
+
+<p><code>(ck-symbol? &lt;ck-macro datum&gt;)</code></p>
+
+<p>
+  Expands into <code>#t</code> if <code>&lt;ck-macro datum&gt;</code>
+  expands into a symbol, and into <code>#f</code>, otherwise.
+</p>
+
+<p><code>(ck-bound-identifier=? &lt;identifier&gt;
+    &lt;input&gt;)</code></p>
+
+<p>
+  Expands into <code>#t</code> if <code>&lt;identifier&gt;</code>
+  and <code>&lt;input&gt;</code> both expand into symbols
+  that denote the same identifier (in the expansion context), and
+  into <code>#f</code>, otherwise.  It is an error
+  if <code>&lt;identifier&gt;</code> does not
+  expand into a symbol.
+</p>
+
+<p><code>(ck-free-identifier=? &lt;identifier&gt;<sub>1</sub>
+    &lt;identifier&gt;<sub>1</sub>)</code></p>
+
+<p>
+  Expands into <code>#t</code>
+  if <code>&lt;identifier&gt;</code><sub>1</sub>
+  and <code>&lt;identifier&gt;</code><sub>2</sub> both expand into
+  symbols such that the identifiers denoted by them have the same
+  meaning (in the expansion context), and into <code>#f</code>,
+  otherwise.  It is an error if <code>&lt;identifier&gt;<sub>1</sub></code>
+  and <code>&gt;identifier&lt;<sub>2</sub></code> do not expand into a
+  symbol.
+</p>
+
+<p><code>(ck-equal? &lt;ck-macro datum&gt;<sub>1</sub>
+    &lt;ck-macro datum&gt;<sub>2</sub>)</code></p>
+
+<p>
+  Expands into <code>#t</code> if <code>&lt;ck-macro
+    datum&gt;</code><sub>1</sub> and <code>&lt;ck-macro
+    datum&gt;</code><sub>2</sub> are the same, and
+    into <code>#f</code>, otherwise.  Pairs, and vectors are compared
+    recursively, and symbols are compared
+  using <code>ck-bound-identifier=?</code>.
+</p>
+
+<h3 id="Listprocessing">List processing</h3>
+
+<h4>Constructors</h4>
+
+<p><code>(ck-cons &lt;input&gt;<sub>1</sub> &lt;input&gt;<sub>2</sub>)</code></p>
+
+<p>
+  Expands into a pair whose car is the expansion
+  of <code>&lt;input&gt;<sub>1</sub></code> and whose cdr is
+  the expansion of <code>&lt;input&gt;<sub>2</sub></code>.
+</p>
+
+<p><code>(ck-cons* &lt;element&gt; ... &lt;tail&gt;)</code></p>
+
+<p>Expands into the expansion of <code>`(,&lt;element&gt; ... . ,&lt;tail&gt;)</code></p>
+
+<p><code>(ck-list &lt;element&gt; ...)</code></p>
+
+<p>
+  Expands into a list whose elements are the expansions of the 
+  <code>&lt;elements&gt;</code>s.
+</p>
+
+<p><code>(ck-make-list &lt;k&gt; &lt;element&gt;)</code></p>
+
+<p>
+  Expands into a list whose length is the length of the expansion of
+  <code>&lt;k&gt;</code>.  The elements of the list are the expansion
+  of <code>&gt;element&lt;</code>.  It is an error
+  if <code>&lt;k&lt;</code> does not expand into a list.
+</p>
+
+<h4>Selectors</h4>
+
+<p><code>(ck-car &lt;pair&gt;)</code></p>
+
+<p>
+  Expands into the car of the expansion of  <code>&lt;pair&gt;</code>.  It is an error if
+  <code>&lt;pair&gt;</code> does not expand into a pair.
+</p>
+
+<p><code>(ck-cdr &lt;pair&gt;)</code></p>
+
+<p>
+  Expands into the cdr of the expansion of  <code>&lt;pair&gt;</code>.  It is an error if
+  <code>&lt;pair&gt;</code> does not expand into a pair.
+</p>
+
+<p><code>(ck-caar &lt;pair&gt;)</code></p>
+<p><code>(ck-cadr &lt;pair&gt;)</code></p>
+<p><code>(ck-cdar &lt;pair&gt;)</code></p>
+<p><code>(ck-cddr &lt;pair&gt;)</code></p>
+ 
+<p>
+  Semantically equivalent to <code>(ck-car (ck-car
+    &lt;pair&gt;))</code>, <code>(ck-car (ck-cdr
+    &lt;pair&gt;))</code>, <code>(ck-cdr (ck-car &lt;pair&gt;))</code>, 
+  <code>(ck-cdr (ck-cdr &lt;pair&gt;))</code>.
+</p>
+
+<p><code>(ck-first &lt;list&gt; ...)</code></p>
+<p><code>(ck-second &lt;list&gt; ...)</code></p>
+<p><code>(ck-third &lt;list&gt; ...)</code></p>
+<p><code>(ck-fourth &lt;list&gt; ...)</code></p>
+<p><code>(ck-fifth &lt;list&gt; ...)</code></p>
+<p><code>(ck-sixth &lt;list&gt; ...)</code></p>
+<p><code>(ck-seventh &lt;list&gt; ...)</code></p>
+<p><code>(ck-eighth &lt;list&gt; ...)</code></p>
+<p><code>(ck-ninth &lt;list&gt; ...)</code></p>
+<p><code>(ck-tenth &lt;list&gt; ...)</code></p>
+
+<p>
+  Expands into the first, second, third, ... element of the expansion
+  of <code>&lt;list&gt;</code>.  It is an error
+  if <code>&lt;list&gt;</code> does not expand into a list
+  of sufficient length.  (Analogously to <code>first</code>, ..., <code>tenth</code> from
+  <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>).
+</p>
+
+<p><code>(ck-list-tail &lt;list&gt; &lt;k&gt;)</code></p>
+
+<p><code>(ck-list-ref &lt;list&gt; &lt;k&gt;)</code></p>
+
+<p>
+  Expands into the <em>k</em>th element of the expansion
+  of <code>&lt;list&gt;</code>, where <em>k</em> is the length of the
+  expansion of <code>&lt;k&gt;</code>.  It is an error
+  if <code>&lt;list&gt;</code>
+  and <code>&lt;k&gt;</code> do not expand into lists.
+</p>
+
+<p><code>(ck-take &lt;list&gt; &lt;k&gt;)</code></p>
+
+<p>
+  Expands into the sublist consisting of the first <em>k</em> elements
+  (in left-to-right order) of the expansion
+  of <code>&lt;list&gt;</code>, where <em>k</em> is the length of the
+  expansion of <code>&lt;k&gt;</code>.  It is an error
+  if <code>&lt;list&gt;</code> and <code>&lt;k&gt;</code> do not
+  expand into lists.  (Analogous to <code>take</code> from
+  <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
+</p>
+
+<p><code>(ck-drop &lt;list&gt; &lt;k&gt;)</code></p>
+
+<p>
+  Expands into the sublist of the expansion
+  of <code>&lt;list&gt;</code> obtained by omitting as much elements
+  on the left as the expansion of <code>&lt;k&gt;<sub>2</sub></code>
+  has elements.  It is an error if <code>&lt;list&gt;</code>
+  and <code>&lt;k&gt;</code> do not expand into lists.
+  (<code>Ck-drop</code> is an alternative name, analogously
+  to <code>drop</code> from
+  <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
+
+</p>
+
+<p><code>(ck-take-right &lt;list&gt;
+&lt;k&gt;)</code></p>
+
+<p>
+  Expands into the sublist consisting of the last <em>k</em> elements
+  (in left-to-right order) of the expansion
+  of <code>&lt;list&gt;</code>, where <em>k</em> is the length of the
+  expansion of <code>&lt;k&gt;</code>.  It is
+  an error if <code>&lt;list&gt;</code>
+  and <code>&lt;k&gt;</code> do not expand
+  into lists.  (Analogous to <code>take-right</code> from
+  <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
+</p>
+
+<p><code>(ck-drop-right &lt;list&gt; &lt;k&gt;)</code></p>
+
+<p>
+  Expands into the sublist consisting of all but the last <em>k</em>
+  elements (in left-to-right order) of the expansion
+  of <code>&lt;list&gt;</code>, where <em>k</em> is the length of the
+  expansion of <code>&lt;k&gt;</code>.  It is
+  an error if <code>&lt;list&gt;</code>
+  and <code>&lt;k&gt;</code> do not expand
+  into lists.  (Analogous to <code>drop-right</code> from
+  <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
+</p>
+
+<h4>Miscellaneous</h4>
+
+<p><code>(ck-append &lt;list&gt; ...)</code></p>
+
+<p>
+  Expands into a (possibly improper) list that is the concatenation of the
+  expansions of the <code>&lt;list</code>s.  It is an error
+  if the <code>&lt;list&gt;</code>s but the last do not
+  expand into a proper list.
+</p>
+
+<p><code>(ck-reverse &lt;list&gt;)</code></p>
+
+<p>Expands into a list whose elements are the elements of the
+  expansion of <code>&lt;list&gt;</code> in reversed order.  It is an
+  error if <code>&lt;list&gt;</code> does not expand into a list.
+</p>
+
+<h4>Folding, unfolding and mapping</h4>
+
+<p><code>(ck-fold &lt;proc&gt; &lt;nil&gt; &lt;list&gt; ...)</code></p>
+
+<p>
+  Expands into the expansion &lt;nil&gt; if at least one of
+  the <code>&lt;list&gt;</code>s expands into the empty list.  Expands
+  into the expansion of <code>(ck-fold &lt;proc&gt; (ck-call
+  &lt;proc&gt; (ck-car &lt;list&gt;) ... &lt;nil&gt;) (ck-cdr
+  &lt;list&gt;) ...)</code> otherwise.
+					      
+  It is an error if the <code>&lt;list&gt;</code>s do not expand into lists.
+
+  (Analogous to <code>fold</code>
+  from <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI
+  1</a>.)
+</p>
+
+<p><code>(ck-fold-right &lt;proc&gt; &lt;nil&gt; &lt;list&gt; ...)</code></p>
+
+<p>
+  Expands into the expansion &lt;nil&gt; if at least one of
+  the <code>&lt;list&gt;</code>s expands into the empty list.  Expands
+  into the expansion of <code>(ck-call &lt;proc&gt;
+  (ck-car &lt;list&gt;) ...  (ck-fold-right &lt;proc&gt; &lt;nil&gt;
+  (ck-cdr &lt;list&gt;) ...))</code> otherwise.  It is an error if
+  the <code>&lt;list&gt;</code>s do not expand into lists.
+  (Analogous to <code>fold-right</code>
+  from <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI
+  1</a>.)
+</p>
+
+<p><code>(ck-unfold &lt;stop?&gt; &lt;mapper&gt; &lt;successor&gt;
+&lt;seed&gt; &lt;tail-mapper&gt;)</code></p>
+<p><code>(ck-unfold &lt;stop??&gt; &lt;mapper&gt; &lt;successor&gt; &lt;seed&gt;)</code></p>
+
+<p>
+  Expands into the expansion of <code>(&lt;tail-mapper&lt;
+  &lt;seed&gt;)</code> if (&lt;stop?&gt; &lt;seed&gt;) does not expand
+  into <code>#f</code>.  Expands into the expansion of <code>(ck-cons (&lt;mapper&gt; &lt;seed&gt;)
+    (ck-unfold &lt;stop?&gt; &lt;mapper&gt; &lt;successor&gt; (&lt;successor&gt; &lt;seed&gt;)
+    &lt;tail-mapper&gt;)</code> otherwise.
+  If &lt;tail-mapper&gt; is omitted, it defaults to <code>(ck-constant '())</code>.
+  (Analogous to <code>unfold</code> from
+  <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
+</p>
+
+<p><code>(ck-unfold-right &lt;stop?&gt; &lt;mapper&gt; &lt;successor&gt;
+&lt;seed&gt; &lt;tail&gt;)</code></p>
+<p><code>(ck-unfold-right &lt;stop??&gt; &lt;mapper&gt; &lt;successor&gt; &lt;seed&gt;)</code></p>
+
+<p>
+  Expands into the expansion of <code>&lt;tail&gt;</code>
+  if <code>(&lt;stop?&gt; &lt;seed&gt;)</code> does not expand
+  into <code>#f</code>.  Expands into the expansion
+  of <code>(ck-unfold-right &lt;stop?&gt; &lt;mapper&gt;
+    &lt;successor&gt; (&lt;successor&gt; &lt;seed&gt;) (ck-cons
+    (&lt;mapper&gt; &lt;seed&gt;) &lt;tail&gt;))</code> otherwise.  If
+  &lt;tail&gt; is omitted, it defaults to <code>'()</code>.
+  (Analogous to <code>unfold-right</code> from
+  <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
+</p>
+
+<p><code>(ck-map &lt;proc&gt; &lt;list&gt; ...)</code></p>
+
+<p>
+  Expands into the empty list if at least one
+  the <code>&lt;list&gt;</code>s expands into the empty list.  Expands
+  into the expansion of <code>(ck-cons (&lt;proc&gt; &lt;head&gt; ...)
+    (ck-map &lt;proc&gt; &lt;tail&gt; ...))</code> if the <code>&lt;list&gt;</code>s expand into
+  <code>(&lt;head&gt; . &lt;tail&gt;)</code>.
+</p>
+
+<p><code>(ck-append-map &lt;proc&gt; &lt;list&gt; ...)</code></p>
+
+<p>
+  Expands into the empty list if at least one
+  the <code>&lt;list&gt;</code>s expands into the empty list.  Expands
+  into the expansion of <code>(ck-append (&lt;proc&gt; &lt;head&gt; ...)
+    (ck-map &lt;proc&gt; &lt;tail&gt; ...))</code> if the <code>&lt;list&gt;</code>s expand into
+  <code>(&lt;head&gt; . &lt;tail&gt;)</code>.
+  (Analogous to <code>append-map</code> from
+  <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
+</p>
+
+<h4>Filtering</h4>
+
+<p><code>(ck-filter &lt;pred&gt; &lt;list&gt; ...)</code></p>
+
+<p>Expands into a list consisting of those elements <em>element</em>;
+  of the expansion of <code>&lt;list&gt;</code> in order, for
+  which <code>(ck-call &lt;pred&gt; <em>element</em>)</code> does not expand
+  into <code>#f</code>.  It is an error if <code>&lt;list&gt;</code> does not expand into a list.
+ (Analogous to <code>filter</code> from
+  <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)  
+</p>
+
+<p><code>(ck-remove &lt;pred&gt; &lt;list&gt; ...)</code></p>
+
+<p>Expands into a list consisting of those elements <em>element</em>;
+  of the expansion of <code>&lt;list&gt;</code> in order for
+  which <code>(ck-call &lt;pred&gt; <em>element</em>)</code> expands
+  into <code>#f</code>.  It is an error if <code>&lt;list&gt;</code> does not expand into a list.
+ (Analogous to <code>remove</code> from
+  <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
+</p>
+
+<h4>Searching</h4>
+
+<p><code>(ck-find &lt;pred&gt; &lt;list&gt;)</code></p>
+
+<p>Expands into the first element <em>element</em> of the expansion
+  of <code>&lt;list&gt;</code> for
+  which <code>(ck-call &lt;pred&gt; <em>element</em>)</code> does not expand
+  into <code>#f</code>.  Expands into <code>#f</code> if there is no such <em>element</em>.
+
+  It is an error if <code>&lt;list&gt;</code> does not expand into a list.
+
+  (Analogous to <code>find</code> from
+  <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
+</p>
+
+<p><code>(ck-find-tail &lt;pred&gt; &lt;list&gt;)</code></p>
+
+<p>Expands into the first pair <em>pair</em> of the expansion
+  of <code>&lt;list&gt;</code> for
+  which <code>(ck-call &lt;pred&gt; (ck-car <em>pair</em>))</code> does not expand
+  into <code>#f</code>.  Expands into <code>#f</code> if there is no such <em>pair</em>.
+
+  It is an error if <code>&lt;list&gt;</code> does not expand into a list.
+
+  (Analogous to <code>find-tail</code> from
+  <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
+</p>
+
+<p><code>(ck-take-while &lt;pred&gt; &lt;list&gt;)</code></p>
+
+<p>Expands into the longest initial sublist consisting of
+  those <em>element</em>s of the expansion of <code>&lt;list&gt;</code>
+  for which <code>(ck-call &lt;pred&gt; <em>element</em>)</code> does not expand
+  into <code>#f</code>.
+
+  It is an error if <code>&lt;list&gt;</code> does not expand into a list.
+
+  (Analogous to <code>take-while</code> from
+  <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
+</p>
+
+<p><code>(ck-drop-while &lt;pred&gt; &lt;list&gt;)</code></p>
+
+<p>Expands into the first pair <em>pair</em> of the expansion
+  of <code>&lt;list&gt;</code> for
+  which <code>(ck-call &lt;pred&gt; (ck-car <em>pair</em>))</code> expands
+  into <code>#f</code>.  Expands into <code>#f</code> if there is no such <em>pair</em>.
+
+  It is an error if <code>&lt;list&gt;</code> does not expand into a list.
+
+  (Analogous to <code>drop-while</code> from
+  <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
+</p>
+
+<p><code>(ck-any &lt;pred&gt; &lt;list&gt; ...)</code></p>
+
+<p>Expands into <code>#f</code> if at least one of
+  the <code>&lt;list&gt;</code>s expands into the empty list.  Expands into the expansion of
+  <code>(ck-or (ck-call &lt;pred&gt; (ck-car &lt;list&gt;) ...) (ck-any
+  (ck-cdr &lt;list&gt;) ...))</code> otherwise.
+
+  It is an error if <code>&lt;list&gt;</code> does not expand into a list.
+
+  (Analogous to <code>ck-any</code> from
+  <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
+</p>
+
+<p><code>(ck-every &lt;pred&gt; &lt;list&gt; ...)</code></p>
+
+<p>Expands into <code>#f</code> if at least one of
+  the <code>&lt;list&gt;</code>s expands into the empty list.  Expands into the expansion of
+  <code>(ck-and (ck-call &lt;pred&gt; (ck-car &lt;list&gt;) ...) (ck-any &lt;pred&gt;
+    (ck-cdr &lt;list&gt;) ...))</code>  otherwise.
+
+  It is an error if <code>&lt;list&gt;</code> does not expand into a list.
+
+  (Analogous to <code>ck-any</code> from
+  <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
+</p>
+
+<p><code>(ck-member &lt;obj&gt; &lt;list&gt; &lt;compare&gt;)</code></p>
+<p><code>(ck-member &lt;obj&gt; &lt;list&gt;)</code></p>
+
+<p>Expands into the expansion of <code>(ck-find-tail (ck-cut &lt;compare&gt; &lt;obj&gt; <>)
+      &lt;list&gt;)</code>
+
+  If the input <code>&lt;compare&gt;</code> is omitted, it defaults to <code>ck-equal?</code>.
+</p>
+
+<h4>Association lists</h4>
+
+<p><code>(ck-assoc &lt;key&gt; &lt;alist&gt; &lt;compare&gt;)</code></p>
+<p><code>(ck-assoc &lt;key&gt; &lt;alist&gt;)</code></p>
+
+<p>Expands into the first element <em>element</em> of the expansion
+  of <code>&lt;alist&gt;</code> for
+  which <code>(ck-call &lt;compare&gt; &lt;key&gt; (ck-car <em>element</em>))</code> does not expand
+  into <code>#f</code>.  Expands into <code>#f</code> if there is no such <em>pair</em>.
+
+  If the input <code>&lt;compare&gt;</code> is omitted, it defaults to <code>ck-equal?</code>.
+
+  It is an error if <code>&lt;alist&gt;</code> does not expand into an
+  association list, a list of pairs.
+</p>
+
+<p><code>(ck-alist-delete &lt;key&gt; &lt;alist&gt; &lt;compare&gt;)</code></p>
+<p><code>(ck-alist-delete &lt;key&gt; &lt;alist&gt;)</code></p>
+
+<p>
+  Expands into an association list consisting of
+  those <em>association</em>s of the expansion
+  of <code>&lt;alist&gt;</code> in order such that <code>(ck-call
+  &lt;compare&gt; &lt;key&gt; (ck-car <em>element</em>))</code>
+  expands into <code>#f</code>.
+
+  If the input <code>&lt;compare&gt;</code> is omitted, it defaults to <code>ck-equal?</code>.
+
+  It is an error if <code>&lt;alist&gt;</code> does not expand into an
+  association list, a list of pairs.
+
+  (Analogous to <code>ck-alist-delete</code> from
+  <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
+</p>
+
+<h4>Set operations</h4>
+
+The following operations are analogous to the set operations on lists
+from <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.
+
+<p><code>(ck-set&lt;= &lt;compare&gt; &lt;list&gt ...)</code></p>
+
+<p>Expands into <code>#t</code> if the elements of the expansion of
+  the <code>&lt;list&gt;</code>s form an increasing tower of sets,
+  where <em>element<sub>1</sub></em> and <em>element<sub>2</sub></em>
+  are considered equal
+  if <code>(ck-call 'compare <em>element<sub>1</sub></em> <em>element<sub>2</sub></em>)</code>
+  does not expand into <code>#f</code>.  It is an error if any of
+  the <code>&lt;list&gt;</code>s do not expand into a list.
+</p>
+
+<p><code>(ck-set= &lt;compare&gt; &lt;list&gt;<sub>1</sub> &lt;list&gt ...)</code></p>
+
+<p>Expands into <code>#t</code> if the elements of the expansion of
+  the <code>&lt;list&gt;</code>s each form the same set as the
+  elements of the expansion of <code>&lt;list&gt;<sub>1</sub></code>,
+  where <em>element<sub>1</sub></em> and <em>element<sub>2</sub></em>
+  are considered equal
+  if <code>(ck-call 'compare <em>element<sub>1</sub></em> <em>element<sub>2</sub></em>)</code>
+  does not expand into <code>#f</code>.  It is an error
+  if <code>&lt;list&gt;<sub>1</sub></code> or any of
+  the <code>&lt;list&gt;</code>s do not expand into a list.
+</p>
+
+<p><code>(ck-set-adjoin &lt;compare&gt; &lt;list&gt; &lt;element&gt; ...)</code></p>
+
+<p>Expands into a list consisting of the elements of the expansion
+  of <code>&lt;list&gt;</code> and the expansion of
+  those <code>&lt;element&gt;</code> added successively to the front,
+  that are not already elements of the list to which they are added.
+  Here, <em>element<sub>1</sub></em> and <em>element<sub>2</sub></em>
+  are considered equal
+  if <code>(ck-compare <em>element<sub>1</sub></em> <em>element<sub>2</sub></em>)</code>
+  does not expand into <code>#f</code>.  It is an error
+  if <code>&lt;list&gt;</code> does not expand into a list.
+</p>
+
+<p><code>(ck-set-union &lt;compare&gt; &lt;list&gt; ...)</code></p>
+
+<p>Expands into a list constructured by adjoining (as
+  in <code>ck-set-adjoin</code>) the elements of the expansions of
+  the <code>&lt;list&gt;</code>s to the empty list.
+  It is an error
+  if the <code>&lt;list&gt;</code>s do not expand into a list.
+</p>
+
+<p><code>(ck-intersection &lt;compare&gt; &lt;list&gt;<sub>1</sub> &lt;list&gt; ...)</code></p>
+
+<p>Expands into the sublist of the expansion
+  of <code>&lt;list&gt;<sub>1</sub></code> (as
+  in <code>ck-filter</code>) consisting of those elements that also elements in the expansions of the
+  <code>&lt;list&gt;</code>s,
+  where <em>element<sub>1</sub></em> and <em>element<sub>2</sub></em>
+  are considered equal
+  if <code>(ck-call 'compare <em>element<sub>1</sub></em> <em>element<sub>2</sub></em>)</code>
+  does not expand into <code>#f</code>.  It is an error
+  if <code>&lt;list&gt;<sub>1</sub></code> or any of
+  the <code>&lt;list&gt;</code>s do not expand into a list.
+</p>
+
+<p><code>(ck-difference &lt;compare&gt; &lt;list&gt;<sub>1</sub> &lt;list&gt; ...)</code></p>
+
+<p>Expands into the sublist of the expansion
+  of <code>&lt;list&gt;<sub>1</sub></code> (as
+  in <code>ck-filter</code>) consisting of those elements that are not
+  elements in any of the expansions of the
+  <code>&lt;list&gt;</code>s,
+  where <em>element<sub>1</sub></em> and <em>element<sub>2</sub></em>
+  are considered equal
+  if <code>(ck-call 'compare <em>element<sub>1</sub></em> <em>element<sub>2</sub></em>)</code>
+  does not expand into <code>#f</code>.  It is an error
+  if <code>&lt;list&gt;<sub>1</sub></code> or any of
+  the <code>&lt;list&gt;</code>s do not expand into a list.
+</p>
+
+<p><code>(ck-xor &lt;compare&gt; &lt;list&gt;<sub>1</sub> &lt;list&gt;<sub>2</sub>)</code></p>
+
+<p>
+  Expands into a list consisting of those elements of the expansion
+  of <code>&lt;list&gt;<sub>1</sub></code> that are not in the
+  expansion of <code>&lt;list&gt;<sub>2</sub></code> and those
+  elements of <code>&lt;list&gt;<sub>2</sub></code> that are not in
+  the expansion of <code>&lt;list&gt;<sub>1</sub></code>,
+  where <em>element<sub>1</sub></em> and <em>element<sub>2</sub></em>
+  are considered equal if <code>(ck-call
+  'compare <em>element<sub>1</sub></em> <em>element<sub>2</sub></em>)</code>
+  does not expand into <code>#f</code>.  It is an error
+  if <code>&lt;list&gt;<sub>1</sub></code> or
+  the <code>&lt;list&gt;<sub>2</sub></code>s do not expand into a
+  list.
+</p>
+
+<h3 id="Vectorprocessing">Vector processing</h3>
+
+<p><code>(ck-vector &lt;element&gt; ...)</code></p>
+
+<p>
+  Expands into a vector whose elements are the expansions of the <code>&lt;element&gt;</code>s.
+</p>
+
+<p><code>(ck-list-&gt;vector &lt;list&gt;)</code></p>
+
+<p>
+  Expands into a vector whose elements are the elements of the
+  expansion of <code>&lt;list&gt;</code>s.  It is an error
+  if <code>&lt;list&gt;</code> does not expand into a (proper) list.
+</p>
+
+<p><code>(ck-vector-&gt;list &lt;vector&gt;)</code></p>
+
+<p>
+  Expands into a list whose elements are the elements of the
+  expansion of <code>&lt;vector&gt;</code>s.  It is an error
+  if <code>&lt;vector&gt;</code> does not expand into a vector.
+</p>
+
+<p><code>(ck-vector-map &lt;proc&gt; &lt;vector&gt; ...)</code></p>
+
+<p>
+  Expands into the empty list if at least one
+  the <code>&lt;vectors&gt;</code>s expands into the empty vector.
+  Expands into the expansion of <code>`#(,(&lt;proc&gt; <em>head</em>
+  ...) ,@(ck-vector->list (ck-vector-map &lt;proc&gt; <em>tail</em> ...)))</code> if
+  the <code>&lt;vector&gt;</code>s expand into vectors of the form
+  <code>`#u(,<em>head</em> ,@<em>tail</em>)</code>.
+</p>
+
+<p><code>(ck-vector-ref &lt;vector&gt; &lt;k&gt;)</code></p>
+
+<p>
+  Expands into the <em>k</em>th element of the expansion
+  of <code>&lt;vector&gt;</code>, where <em>k</em>
+  is the length of the expansion of <code>&lt;k&gt;</code>.
+  It is an error if <code>&lt;vector&gt;</code> does not expand into a vector,
+  or <code>&lt;k&gt;</code> do not expand into a list.
+</p>
+
+<h3 id="Combinatorics">Combinatorics</h3>
+
+<p><code>(ck-zero)</code></p>
+<p><code>(ck-one)</code></p>
+<p><code>(ck-two)</code></p>
+<p><code>(ck-three)</code></p>
+<p><code>(ck-four)</code></p>
+<p><code>(ck-five)</code></p>
+<p><code>(ck-six)</code></p>
+<p><code>(ck-seven)</code></p>
+<p><code>(ck-eight)</code></p>
+<p><code>(ck-nine)</code></p>
+<p><code>(ck-ten)</code></p>
+
+<p>Expands into a list of zero, one, two, ... pairwise different elements.</p>
+
+<p><code>(ck-= &lt;list&gt;<sub>1</sub> &lt;list&gt; ...)</code></p>
+
+<p>
+  Expands into <code>#t</code>
+  if <code>&lt;list&gt;<sub>1</sub></code> and each of the
+  <code>&lt;list&gt;</code>s expand into lists of the
+  same length, and into <code>#f</code> otherwise.  It is an error
+  if <code>&lt;list&gt;<sub>1</sub></code>
+  or any of the <code>&lt;list&gt;</code>s do not expand
+  into lists.
+</p>
+
+<p><code>(ck-&lt; &lt;list&gt; ...)</code></p>
+
+<p>
+  Expands into <code>#t</code>
+  if the <code>&lt;list&gt;</code>s expand into lists of
+  strictly increasing length, and into <code>#f</code>
+  otherwise.  It is an error if any of the <code>&lt;list&gt;</code>s
+  do not expand into lists.
+</p>
+
+<p><code>(ck-&lt;= &lt;list&gt; ...)</code></p>
+
+<p>
+  Expands into <code>#t</code>
+  if the <code>&lt;list&gt;</code>s expand into lists of
+  (not necessarily strictly) increasing length, and into <code>#f</code>
+  otherwise.  It is an error if any of the <code>&lt;list&gt;</code>s
+  do not expand into lists.
+</p>
+
+<p><code>(ck-&gt; &lt;list&gt; ...)</code></p>
+
+<p>
+  Expands into <code>#t</code>
+  if the <code>&lt;list&gt;</code>s expand into lists of
+  strictly decreasing length, and into <code>#f</code>
+  otherwise.  It is an error if any of the <code>&lt;list&gt;</code>s
+  do not expand into lists.
+</p>
+
+<p><code>(ck-&gt;= &lt;list&gt; ...)</code></p>
+
+<p>
+  Expands into <code>#t</code>
+  if the <code>&lt;list&gt;</code>s expand into lists of
+  (not necessarily strictly) decreasing length, and into <code>#f</code>
+  otherwise.  It is an error if any of the <code>&lt;list&gt;</code>s
+  do not expand into lists.
+</p>
+
+<p><code>(ck-zero? &lt;list&gt;)</code></p>
+
+<p>Expands into <code>#t</code> if <code>&lt;list&gt;</code> expands
+into the empty list, and into <code>#f</code>, otherwise.  It is an
+  error if <code>&lt;list&gt;</code> does not expand into a list.
+</p>
+
+<p><code>(ck-even? &lt;list&gt;)</code></p>
+
+<p>Expands into <code>#t</code> if <code>&lt;list&gt;</code> expands
+into the list with an even number of elements, and into <code>#f</code>, otherwise.  It is an
+  error if <code>&lt;list&gt;</code> does not expand into a list.
+</p>
+
+<p><code>(ck-odd? &lt;list&gt;)</code></p>
+
+<p>Expands into <code>#t</code> if <code>&lt;list&gt;</code> expands
+into the list with an odd number of elements, and into <code>#f</code>, otherwise.  It is an
+  error if <code>&lt;list&gt;</code> does not expand into a list.
+</p>
+
+<p><code>(ck-+ &lt;list&gt; ...)</code></p>
+
+<p>Expands into a list whose elements are the elements of the expansions of the
+  <code>&lt;list&gt;</code>s in left-to-right order.  It is an
+  error if the <code>&lt;list&gt;</code>s do not expand into a list.
+</p>
+
+<p><code>(ck-- &lt;list&gt;<sub>1</sub> &lt;list&gt; ...)</code></p>
+
+<p>Expands into a list whose elements are all but the last <em>k</em>
+  elements of the expansion of the
+  <code>&lt;list&gt;<sub>1</sub></code>, where <em>k</em> is total
+  number of elements of the expansion of
+  the <code>&lt;list&gt;</code>s.
+
+  It is an
+  error if the <code>&lt;list&gt;</code>s do not expand into lists.  It is likewise an error if
+  <code>&lt;list&gt;<sub>1</sub></code> does not expand into a list or
+  in a list with less then <em>k</em> elements.
+</p>
+
+<p><code>(ck-* &lt;list&gt; ...)</code></p>
+
+<p>Expands into a list whose elements are the elements of the
+  cartesian product of the expansions of
+  the <code>&lt;list&gt;</code>s in lexicographic left-to-right order.
+
+  It is an
+  error if the <code>&lt;list&gt;</code>s do not expand into lists.
+</p>
+
+<p><code>(ck-quotient &lt;list&gt; &lt;k&gt;)</code></p>
+
+<p>Expands into a list of each <em>k</em>th element in
+  left-to-right order of the expansion
+  of <code>&lt;list&gt;</code>, where <em>k</em> is the number of
+  elements of the expansion of <code>&lt;k&gt;</code>.
+
+  It is an error if <code>&lt;list&gt;</code>
+  or <code>&lt;k&gt;</code> do not expand into lists.
+</p>
+
+<p><code>(ck-remainder &lt;list&gt; &lt;k&gt;)</code></p>
+
+<p>Expands into a smallest tail of the expansion
+  of <code>&lt;list&gt;</code> such that the number of elements before the tail
+  is divisible by <em>k</em>, where <em>k</em> is the number of
+  elements of the expansion of <code>&lt;k&gt;</code>.
+
+  It is an error if <code>&lt;list&gt;</code>
+  or <code>&lt;k&gt;</code> do not expand into lists.
+</p>
+
+<p><code>(ck-fact &lt;list&gt;)</code></p>
+
+<p>Expands into a list of all permutations of the expansion of <code>&lt;list&gt;</code> in
+  lexicographic left-to-right order.
+  
+  It is an error if <code>&lt;list&gt;</code>
+  does not expand into a list.
+</p>
+
+<p><code>(ck-binom &lt;list&gt; &lt;k&gt;)</code></p>
+
+<p>Expands into a list of all <em>k</em>-element (ordered) sublists in
+  lexicographic left-to-right order of the expansion
+  of <code>&lt;list&gt;</code>, where <em>k</em> is the number of
+  elements of the expansion of <code>&lt;k&gt;</code>.
+
+  It is an error if <code>&lt;list&gt;</code>
+  or <code>&lt;k&gt;</code> do not expand into lists.
+</p>
+
+<h1>Implementation</h1>
+
+<p>
+This SRFI comes with a <a href="srfi/148.sld">complete portable sample
+implementation</a> of this specification as an R7RS library.  The
+sample implementation is based
+on <a href="http://srfi.schemers.org/srfi-147/srfi-147.html">SRFI
+147</a>, of which an implementation is included in this SRFI.
+Therefore, when using the sample implementation, one has to
+import <code>(srfi 147)</code> as well (as long as the Scheme system
+does not support SRFI 147 natively).
+</p>
+
+<p>
+  An implementation of SRFI 26, from which the identifier <code>&lt;&gt;</code> is
+  imported and re-exported, is also included.
+</p>
+
+<p>
+The
+test suite also depends
+on <a href="http://srfi.schemers.org/srfi-2/srfi-2.html">SRFI 2</a>
+and <a href="http://srfi.schemers.org/srfi-64/srfi-64.html">SRFI
+64</a>, for which suitable implementations are included as well.
+</p>
+
+<p>A Scheme system wishing to support this SRFI can either bundle the
+  provided sample implementation with its system libraries, or implement the interface natively,
+  mostly for the sake of expansion speed and for much improved error reporting. 
+</p>
+
+<h1>Acknowledgements</h1>
+
+<p>
+This SRFI is based on the ideas on CK-macros outlined by Oleg Kiselyov
+in <a href="http://okmij.org/ftp/Scheme/macros.html#ck-macros"><em>Applicative
+syntax-rules: macros that compose better</em></a>. 
+</p>
+
+<p>
+  The CK abstract machine, on which the macro system is based, has
+  been described by Matthias Felleisen and Daniel P. Friedman
+  in <a href="https://www.cs.indiana.edu/ftp/techreports/TR197.pdf"><em>Control
+  operators, the SECD machine, and the lambda-calculus</em></a>.
+</p>
+
+<p>
+  There is a simple implementation of Oleg Kiselyov's idea by John Croisant as a <a href="http://wiki.call-cc.org/eggref/4/ck-macros">Chicken egg</a>.
+</p>
+
+<p><a href="http://srfi.schemers.org/srfi-53/srfi-53.html">SRFI 53</a>
+  by Andre van Tonder was an earlier try to "provide a portable
+  framework for writing complex high-level macros that perform
+  nontrivial computations during expansion".  At that time, the
+  expressiveness of Scheme (in the form of the R5RS) wasn't sufficient
+  enough to build a usable framework of that sort on top
+  of <code>syntax-rules</code>
+  (see <a href="http://srfi-email.schemers.org/srfi-53/msg/2771559">this
+  message</a>).
+</p>
+
+<h1>Copyright</h1> Copyright (C) Marc Nieper-Wi&szlig;kirchen (2016).
+All Rights Reserved.
+
+<p>
+  Permission is hereby granted, free of charge, to any person
+  obtaining a copy of this software and associated documentation files
+  (the "Software"), to deal in the Software without restriction,
+  including without limitation the rights to use, copy, modify, merge,
+  publish, distribute, sublicense, and/or sell copies of the Software,
+  and to permit persons to whom the Software is furnished to do so,
+  subject to the following conditions:
+
+<p>
+  The above copyright notice and this permission notice shall be
+  included in all copies or substantial portions of the Software.
+
+<p>
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+  BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+  ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.
+
+  <hr>
+  <address>Editor: <a href="mailto:srfi-editors+at+srfi+dot+schemers+dot+org">Arthur A. Gleckler</a></address></body></html>
