@@ -151,7 +151,7 @@ in a <a href="srfi/148.macros.scm">file of the sample implementation</a>.
  (define-syntax letrec
    (ck-macro-transformer ()
      ((letrec ((var1 init1) ...) body ...)
-      ((ck-generate-temporaries) =&gt; '(temp1 ...))
+      ((ck-generate-temporaries '(var1 ...)) =&gt; '(temp1 ...))
       '(let ((var1 &lt;undefined&gt;) ...)
         (let ((temp1 init1) ...)
             (set! var1 temp1)
@@ -208,22 +208,22 @@ in a <a href="srfi/148.macros.scm">file of the sample implementation</a>.
 	     (lambda (return)
 	       (let ((e expr))
 		 (or (and-let* 
-			 ,(%compile-pattern 'pattern 'e)
+			 ,(compile-pattern 'pattern 'e)
 		       (call-with-values (lambda () . body) return))
 		     ...
 		     (error "does not match" expr)))))))))
 
-     (define-syntax %compile-pattern
+     (define-syntax compile-pattern
        (ck-macro-transformer ()
-	 ((%compile-pattern '() 'e)
+	 ((compile-pattern '() 'e)
 	  '(((null? e))))
-	 ((%compile-pattern '(pattern1 pattern2 ...) 'e)
+	 ((compile-pattern '(pattern1 pattern2 ...) 'e)
 	  `(((not (null? e)))
 	    (e1 (car e))
 	    (e2 (cdr e))
-	    ,@(%compile-pattern 'pattern1 'e1)
-	    ,@(%compile-pattern '(pattern2 ...) 'e2)))
-	 ((%compile-pattern 'x 'e)
+	    ,@(compile-pattern 'pattern1 'e1)
+	    ,@(compile-pattern '(pattern2 ...) 'e2)))
+	 ((compile-pattern 'x 'e)
 	  (ck-if (ck-symbol? 'x)
 	    '((x e))
 	    '(((equal? x e)))))))))
@@ -277,21 +277,26 @@ well-known <code>syntax-rules</code>, namely of one of the two forms:
 </pre>
 
 <p>
-  When we forget about the <code>&lt;pattern binding spec&gt;</code>s for a moment,
-  the difference between a composable macro and
+  When we forget about the <code>&lt;pattern binding spec&gt;</code>s
+  for a moment, the difference between a composable macro and
   a <code>syntax-rules</code>-macro lies in how the input elements
-  corresponding to the <code>&lt;pattern&gt;</code>s above are expanded
-  before a macro use is expanded: <code>syntax-rules</code> macros
-  never expand their arguments before evaluation.  On the other
+  corresponding to the <code>&lt;pattern&gt;</code>s above are
+  expanded before a macro use is expanded: <code>syntax-rules</code>
+  macros never expand their arguments before evaluation.  On the other
   hand, <code>ck-macro-transformer</code> macros expand those input
   elements whose corresponding patterns are of the
-  form <code>'&lt;pattern&gt;</code>, where the expansion of quoted
-  input elements is the input element itself, just as in the case of
-  evaluation of quoted datums.
+  form <code>'&lt;pattern&gt;</code>.  The output of a composable
+  macro is handled as follows: If the template is of the
+  form <code>&lt;'template&gt;</code>, the composable macro expands
+  into <code>&lt;template&gt;</code> (which the pattern variables
+  substituted); if the template is unquoted, the composable macro
+  expands into the expansion of the template.  This behavior is
+  analogous to how evaluation of quoted datums is handled in the core Scheme
+  language.
 </p>
 
 <p>
-  For example, the following expression evaluates to 42:
+  For example, the following expression evaluates to <code>42</code>:
 </p>
 
 <pre>
@@ -592,35 +597,127 @@ the following exceptions and additions:
 <h3>Index</h3>
 
 <ul>
-  <li><a href="#General">General</a>: ck-expression, ck-cut, ck-cute,
-  ck-constant, ck-quote, ck-eval, ck-apply, ck-call, ck-error,
-  ck-gensym, ck-generate-temporaries</li>
-  <li><a href="#Booleanlogic">Boolean logic</a>: ck-if, ck-not, ck-or,
-  ck-and, ck-null?, ck-pair?, ck-list?, ck-boolean?, ck-vector?,
-  ck-symbol?, ck-bound-identifier=?, ck-free-identifier=?,
-  ck-equal?</li>
-  <li><a href="#Listprocessing">List processing</a>: ck-cons,
-  ck-cons*, ck-list, ck-make-list, ck-car, ck-cdr, ck-caar, ck-cadr,
-  ck-cdar, ck-cddr, ck-first, ck-second, ck-third, ck-forth, ck-fifth,
-  ck-sixth, ck-seventh, ck-eighth, ck-ninth, ck-tenth, ck-list-tail,
-  ck-list-ref, ck-take, ck-drop, ck-take-right, ck-drop-right,
-  ck-last, ck-last-pair, ck-append, ck-reverse, ck-fold,
-  ck-fold-right, ck-unfold, ck-unfold-right, ck-map, ck-append-map,
-  ck-filter, ck-remove, ck-find, ck-find-tail, ck-take-while,
-  ck-drop-while, ck-any, ck-every, ck-member, ck-assoc,
-  ck-alist-delete, ck-set&lt;=, ck-set=, ck-set-adjoin, ck-set-union,
-  ck-set-intersection, ck-set-difference, ck-set-xor</li>
-  <li><a href="#Vectorprocessing">Vector processing</a>: ck-vector,
-  ck-list-&gt;vector, ck-vector-&gt;list, ck-vector-map, ck-vector-ref</li>
-  <li><a href="#Combinatorics">Combinatorics</a>: ck-0, ck-1, ck-2,
-  ck-3, ck-4, ck-5, ck-6, ck-7, ck-8, ck-9, ck-10, ck-=, ck-&lt;, ck-&lt;=,
-  ck-&gt;, ck-&gt;=, ck-zero?, ck-even?, ck-odd?, ck-+, ck--, ck-*,
-  ck-quotient, ck-remainder, ck-fact, ck--binom</li>
+  <li><a href="#General">General</a>: <a href="#ck-expression">ck-expression</a>,
+    <a href="#ck-cut">ck-cut</a>, <a href="#ck-cute">ck-cute</a>,
+    <a href="#ck-constant">ck-constant</a>, <a href="#ck-quote">ck-quote</a>,
+    <a href="#ck-eval">ck-eval</a>, <a href="#ck-apply">ck-apply</a>, <a href="#ck-call">ck-call</a>,
+    <a href="#ck-error">ck-error</a>,
+    <a href="#ck-gensym">ck-gensym</a>,
+    <a href="#ck-generate-temporaries">ck-generate-temporaries</a>
+  </li>
+  <li><a href="#Booleanlogic">Boolean logic</a>:
+    <a href="#ck-if">ck-if</a>,
+    <a href="#ck-not">ck-not</a>,
+    <a href="#ck-or">ck-or</a>,
+    <a href="#ck-and">ck-and</a>,
+    <a href="#ck-null?">ck-null?</a>,
+    <a href="#ck-pair?">ck-pair?</a>,
+    <a href="#ck-list?">ck-list?</a>,
+    <a href="#ck-boolean?">ck-boolean?</a>,
+    <a href="#ck-vector?">ck-vector?</a>,
+    <a href="#ck-symbol?">ck-symbol?</a>,
+    <a href="#ck-bound-identifier=?">ck-bound-identifier=?</a>,
+    <a href="#ck-free-identifier=?">ck-free-identifier=?</a>,
+    <a href="#ck-equal?">ck-equal?</a>
+  </li>
+  <li><a href="#Listprocessing">List processing</a>:
+    <a href="#ck-cons">ck-cons</a>,
+    <a href="#ck-cons*">ck-cons*</a>,
+    <a href="#ck-list">ck-list</a>,
+    <a href="#ck-make-list">ck-make-list</a>,
+    <a href="#ck-car">ck-car</a>,
+    <a href="#ck-cdr">ck-cdr</a>,
+    <a href="#ck-caar">ck-caar</a>,
+    <a href="#ck-cadr">ck-cadr</a>,
+    <a href="#ck-cdar">ck-cdar</a>,
+    <a href="#ck-cddr">ck-cddr</a>,
+    <a href="#ck-first">ck-first</a>,
+    <a href="#ck-second">ck-second</a>,
+    <a href="#ck-third">ck-third</a>,
+    <a href="#ck-fourth">ck-fourth</a>,
+    <a href="#ck-fifth">ck-fifth</a>,
+    <a href="#ck-sixth">ck-sixth</a>,
+    <a href="#ck-seventh">ck-seventh</a>,
+    <a href="#ck-eighth">ck-eighth</a>,
+    <a href="#ck-ninth">ck-ninth</a>,
+    <a href="#ck-tenth">ck-tenth</a>,
+    <a href="#ck-list-tail">ck-list-tail</a>,
+    <a href="#ck-list-ref">ck-list-ref</a>,
+    <a href="#ck-take">ck-take</a>,
+    <a href="#ck-drop">ck-drop</a>,
+    <a href="#ck-take-right">ck-take-right</a>,
+    <a href="#ck-drop-right">ck-drop-right</a>,
+    <a href="#ck-last">ck-last</a>,
+    <a href="#ck-last-pair">ck-last-pair</a>,
+    <a href="#ck-append">ck-append</a>,
+    <a href="#ck-reverse">ck-reverse</a>,
+    <a href="#ck-fold">ck-fold</a>,
+    <a href="#ck-fold-right">ck-fold-right</a>,
+    <a href="#ck-unfold">ck-unfold</a>,
+    <a href="#ck-unfold-right">ck-unfold-right</a>,
+    <a href="#ck-map">ck-map</a>,
+    <a href="#ck-append-map">ck-append-map</a>,
+    <a href="#ck-filter">ck-filter</a>,
+    <a href="#ck-remove">ck-remove</a>,
+    <a href="#ck-find">ck-find</a>,
+    <a href="#ck-find-tail">ck-find-tail</a>,
+    <a href="#ck-take-while">ck-take-while</a>,
+    <a href="#ck-drop-while">ck-drop-while</a>,
+    <a href="#ck-any">ck-any</a>,
+    <a href="#ck-every">ck-every</a>,
+    <a href="#ck-member">ck-member</a>,
+    <a href="#ck-assoc">ck-assoc</a>,
+    <a href="#ck-alist-delete">ck-alist-delete</a>,
+    <a href="#ck-set>=">ck-set&lt;=</a>,
+    <a href="#ck-set=">ck-set=</a>,
+    <a href="#ck-set-adjoin">ck-set-adjoin</a>,
+    <a href="#ck-set-union">ck-set-union</a>,
+    <a href="#ck-set-intersection">ck-set-intersection</a>,
+    <a href="#ck-set-difference">ck-set-difference</a>,
+    <a href="#ck-set-xor">ck-set-xor</a>
+  </li>
+  <li>
+    <a href="#Vectorprocessing">Vector processing</a>:
+    <a href="#ck-vector">ck-vector</a>,
+    <a href="#ck-list->vector">ck-list-&gt;vector</a>,
+    <a href="#ck-vector->list">ck-vector-&gt;list</a>,
+    <a href="#ck-vector-map">ck-vector-map</a>,
+    <a href="#ck-vector-ref">ck-vector-ref</a>,
+  </li>
+  <li>
+    <a href="#Combinatorics">Combinatorics</a>:
+    <a href="#ck-0">ck-0</a>,
+    <a href="#ck-1">ck-1</a>,
+    <a href="#ck-2">ck-2</a>,
+    <a href="#ck-3">ck-3</a>,
+    <a href="#ck-4">ck-4</a>,
+    <a href="#ck-5">ck-5</a>,
+    <a href="#ck-6">ck-6</a>,
+    <a href="#ck-7">ck-7</a>,
+    <a href="#ck-8">ck-8</a>,
+    <a href="#ck-9">ck-9</a>,
+    <a href="#ck-10">ck-10</a>,
+    <a href="#ck-=">ck-=</a>,
+    <a href="#ck-<;">ck-&lt;</a>,
+    <a href="#ck-<=">ck-&lt;=</a>,
+    <a href="#ck->">ck-&gt;</a>,
+    <a href="#ck->=">ck-&gt;=</a>,
+    <a href="#ck-zero?">ck-zero?</a>,
+    <a href="#ck-even?">ck-even?</a>,
+    <a href="#ck-odd?">ck-odd?</a>,
+    <a href="#ck-+">ck-+</a>,
+    <a href="#ck--">ck--</a>,
+    <a href="#ck-*">ck-*</a>,
+    <a href="#ck-quotient">ck-quotient</a>,
+    <a href="#ck-remainder">ck-remainder</a>,
+    <a href="#ck-fact">ck-fact</a>,
+    <a href="#ck-binom">ck-binom</a>
+  </li>
 </ul>
 
 <h3 id="General">General</h3>
 
-<p><code>(ck-expression &lt;ck-macro use&gt;)</code></p>
+<p id="ck-expression"><code>(ck-expression &lt;ck-macro use&gt;)</code></p>
 
 <p>Expands into the expansion of &lt;ck-macro use&gt; with the
   additional property that it is allowed in an expression context.  It
@@ -634,9 +731,8 @@ the following exceptions and additions:
     outer scope, this auxiliary <code>ck-expression</code> wouldn't be necessary.</i>
 </p>
 
-<p><code>(ck-cut &lt;slot or ck-macro datum&gt;<sub>1</sub> &lt;slot or
+<p id="ck-cut"><code>(ck-cut &lt;slot or ck-macro datum&gt;<sub>1</sub> &lt;slot or
 ck-macro datum&gt;<sub>2</sub> ...)</code></p>
-
 <p><code>(ck-cut &lt;slot or ck-macro datum&gt;<sub>1</sub> &lt;slot or
 ck-macro datum&gt;<sub>2</sub> ... &lt;&gt; &lt;ellipsis&gt;)</code></p>
 
@@ -660,9 +756,8 @@ ck-macro datum&gt;<sub>2</sub> ... &lt;&gt; &lt;ellipsis&gt;)</code></p>
     an input or output element of a ck-macro.
 </p>
 
-<p><code>(ck-cute &lt;slot or ck-macro datum&gt;<sub>1</sub> &lt;slot or
+<p id="ck-cute"><code>(ck-cute &lt;slot or ck-macro datum&gt;<sub>1</sub> &lt;slot or
 ck-macro datum&gt;<sub>2</sub> ...)</code></p>
-
 <p><code>(ck-cute &lt;slot or ck-macro datum&gt;<sub>1</sub> &lt;slot or
 ck-macro datum&gt;<sub>2</sub> ... &lt;&gt; &lt;ellipsis&gt;)</code></p>
 
@@ -686,7 +781,7 @@ ck-macro datum&gt;<sub>2</sub> ... &lt;&gt; &lt;ellipsis&gt;)</code></p>
   </i>
 </p>
 
-<p><code>(ck-constant &lt;constant&gt;)</code></p>
+<p id="ck-constant"><code>(ck-constant &lt;constant&gt;)</code></p>
 
 <p>
   Expands into a ck-macro that accepts an arbitrary number of input
@@ -697,11 +792,11 @@ ck-macro datum&gt;<sub>2</sub> ... &lt;&gt; &lt;ellipsis&gt;)</code></p>
   an input or output element of a ck-macro.
 </p>
 
-<p><code>(ck-quote &lt;ck-macro datum&gt;)</code></p>
+<p id="ck-quote"><code>(ck-quote &lt;ck-macro datum&gt;)</code></p>
 
 <p>Expands into the quotation of the expansion of the <code>&lt;ck-macro datum&gt;</code>.</p>
 
-<p><code>(ck-eval &lt;ck-macro datum&gt;)</code></p>
+<p id="ck-eval"><code>(ck-eval &lt;ck-macro datum&gt;)</code></p>
 
 <p>Expands into the expansion of the expansion of &lt;ck-macro datum&gt;.</p>
 
@@ -715,7 +810,7 @@ ck-macro datum&gt;<sub>2</sub> ... &lt;&gt; &lt;ellipsis&gt;)</code></p>
 
 <p>It is an error if <code>&lt;ck-macro datum&gt;<sub>2</sub></code> does not expand into a list.</p>
 
-<p><code>(ck-call &lt;macro&gt; &lt;input&gt; ...)</code></p>
+<p id="ck-call"><code>(ck-call &lt;macro&gt; &lt;input&gt; ...)</code></p>
 
 <p>Semantically equivalent to:</p>
 
@@ -723,21 +818,21 @@ ck-macro datum&gt;<sub>2</sub> ... &lt;&gt; &lt;ellipsis&gt;)</code></p>
  (ck-apply &lt;macro&gt; &lt;input&gt; ... '())
 </pre>
 
-<p><code>(ck-error &lt;message&gt; &lt;argument&gt; ...)</code></p>
+<p id="ck-error"><code>(ck-error &lt;message&gt; &lt;argument&gt; ...)</code></p>
 
-<p>Expands into a syntax error whose message is the expansion
+<p>Expansion yields a syntax error whose message is the expansion
   of <code>&lt;message&gt;</code> and whose
   arguments are the expansions of the <code>&lt;argument&gt;</code>s.
 </p>
 
-<p><code>(ck-gensym)</code></p>
+<p id="ck-gensym"><code>(ck-gensym)</code></p>
 
 <p>Expands into a fresh identifier that is
   not <code>ck-bound-identifier=?</code> (see below) to any existing
   already existing identifier.
 </p>
 
-<p><code>(ck-generate-temporaries &lt;list&gt;)</code></p>
+<p id="ck-generate-temporaries"><code>(ck-generate-temporaries &lt;list&gt;)</code></p>
 
 <p>Expands into a list of pairwise different (in the sense of <code>bound-identifier=?</code>)
   identifiers whose length is the number of elements in the expansion of <code>&lt;list&gt;</code>
@@ -746,7 +841,9 @@ ck-macro datum&gt;<sub>2</sub> ... &lt;&gt; &lt;ellipsis&gt;)</code></p>
 
 <h3 id="Booleanlogic">Boolean logic</h3>
 
-<p><code>(ck-if &lt;ck-macro datum&gt;<sub>1</sub> &lt;ck-macro datum&gt;<sub>2</sub> &lt;ck-macro datum&gt;<sub>3</sub>)</code></p>
+<p id="ck-if"><code>(ck-if &lt;ck-macro datum&gt;<sub>1</sub>
+&lt;ck-macro datum&gt;<sub>2</sub> &lt;ck-macro
+datum&gt;<sub>3</sub>)</code></p>
 
 <p>Expands into the expansion of <code>&lt;ck-macro datum&gt;<sub>2</sub></code> if
   <code>&lt;ck-macro datum&gt;<sub>1</sub></code> does not expand
@@ -754,13 +851,13 @@ ck-macro datum&gt;<sub>2</sub> ... &lt;&gt; &lt;ellipsis&gt;)</code></p>
     datum&gt;<sub>3</sub></code> otherwise.
 </p>
 
-<p><code>(ck-not &lt;ck-macro datum&gt;)</code></p>
+<p id="ck-not"><code>(ck-not &lt;ck-macro datum&gt;)</code></p>
 
 <p>Expands into <code>#f</code> if <code>&lt;ck-macro datum&gt;</code>
 does not expand into <code>#f</code>, and into <code>#t</code> otherwise.
 </p>
 
-<p><code>(ck-or &lt;ck-macro datum&gt;)</code></p>
+<p id="ck-or"><code>(ck-or &lt;ck-macro datum&gt;)</code></p>
 
 <p>Expands into the expansion of the first <code>&lt;ck-macro
     datum&gt;</code> (in left-to-right order) that does not expand
@@ -770,7 +867,7 @@ does not expand into <code>#f</code>, and into <code>#t</code> otherwise.
     expand into <code>#f</code>.
 </p>
 
-<p><code>(ck-and &lt;ck-macro datum&gt;)</code></p>
+<p id="ck-and"><code>(ck-and &lt;ck-macro datum&gt;)</code></p>
 
 <p>Expands into the expansion of the last <code>&lt;ck-macro
     datum&gt;</code> (in left-to-right order) if all previous
@@ -780,45 +877,45 @@ does not expand into <code>#f</code>, and into <code>#t</code> otherwise.
     into <code>#f</code>; expands into <code>#f</code> otherwise.
 </p>
 
-<p><code>(ck-null? &lt;ck-macro datum&gt;)</code></p>
+<p id="ck-null?"><code>(ck-null? &lt;ck-macro datum&gt;)</code></p>
 
 <p>Expands into <code>#t</code> if <code>&lt;ck-macro datum&gt;</code>
 expands into the empty list, and into <code>#f</code> otherwise.
 </p>
 
-<p><code>(ck-pair? &lt;ck-macro datum&gt;)</code></p>
+<p id="ck-pair?"><code>(ck-pair? &lt;ck-macro datum&gt;)</code></p>
 
 <p>Expands into <code>#t</code> if <code>&lt;ck-macro datum&gt;</code>
 expands into a pair, and into <code>#f</code> otherwise.
 </p>
 
 
-<p><code>(ck-list? &lt;ck-macro datum&gt;)</code></p>
+<p id="ck-list?"><code>(ck-list? &lt;ck-macro datum&gt;)</code></p>
 
 <p>Expands into <code>#t</code> if <code>&lt;ck-macro datum&gt;</code>
 expands into a (proper) list, and into <code>#f</code> otherwise.
 </p>
 
-<p><code>(ck-boolean? &lt;ck-macro datum&gt;)</code></p>
+<p id="ck-boolean?"><code>(ck-boolean? &lt;ck-macro datum&gt;)</code></p>
 
 <p>Expands into <code>#t</code> if <code>&lt;ck-macro datum&gt;</code>
 expands into a boolean literal, and into <code>#f</code> otherwise.
 </p>
 
-<p><code>(ck-vector? &lt;ck-macro datum&gt;)</code></p>
+<p id="ck-vector?"><code>(ck-vector? &lt;ck-macro datum&gt;)</code></p>
 
 <p>Expands into <code>#t</code> if <code>&lt;ck-macro datum&gt;</code>
 expands into a vector literal, and into <code>#f</code> otherwise.
 </p>
 
-<p><code>(ck-symbol? &lt;ck-macro datum&gt;)</code></p>
+<p id="ck-symbol?"><code>(ck-symbol? &lt;ck-macro datum&gt;)</code></p>
 
 <p>
   Expands into <code>#t</code> if <code>&lt;ck-macro datum&gt;</code>
   expands into a symbol, and into <code>#f</code> otherwise.
 </p>
 
-<p><code>(ck-bound-identifier=? &lt;identifier&gt;
+<p id="ck-bound-identifier=?"><code>(ck-bound-identifier=? &lt;identifier&gt;
     &lt;input&gt;)</code></p>
 
 <p>
@@ -830,7 +927,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   expand into a symbol.
 </p>
 
-<p><code>(ck-free-identifier=? &lt;identifier&gt;<sub>1</sub>
+<p id="ck-free-identifier=?"><code>(ck-free-identifier=? &lt;identifier&gt;<sub>1</sub>
     &lt;identifier&gt;<sub>1</sub>)</code></p>
 
 <p>
@@ -844,7 +941,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   symbol.
 </p>
 
-<p><code>(ck-equal? &lt;ck-macro datum&gt;<sub>1</sub>
+<p id="ck-equal?"><code>(ck-equal? &lt;ck-macro datum&gt;<sub>1</sub>
     &lt;ck-macro datum&gt;<sub>2</sub>)</code></p>
 
 <p>
@@ -860,7 +957,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
 
 <h4>Constructors</h4>
 
-<p><code>(ck-cons &lt;input&gt;<sub>1</sub> &lt;input&gt;<sub>2</sub>)</code></p>
+<p id="ck-cons"><code>(ck-cons &lt;input&gt;<sub>1</sub> &lt;input&gt;<sub>2</sub>)</code></p>
 
 <p>
   Expands into a pair whose car is the expansion
@@ -868,18 +965,18 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   the expansion of <code>&lt;input&gt;<sub>2</sub></code>.
 </p>
 
-<p><code>(ck-cons* &lt;element&gt; ... &lt;tail&gt;)</code></p>
+<p id="ck-cons*"><code>(ck-cons* &lt;element&gt; ... &lt;tail&gt;)</code></p>
 
 <p>Expands into the expansion of <code>`(,&lt;element&gt; ... . ,&lt;tail&gt;)</code></p>
 
-<p><code>(ck-list &lt;element&gt; ...)</code></p>
+<p id="ck-list"><code>(ck-list &lt;element&gt; ...)</code></p>
 
 <p>
   Expands into a list whose elements are the expansions of the 
   <code>&lt;elements&gt;</code>s.
 </p>
 
-<p><code>(ck-make-list &lt;k&gt; &lt;element&gt;)</code></p>
+<p id="ck-make-list"><code>(ck-make-list &lt;k&gt; &lt;element&gt;)</code></p>
 
 <p>
   Expands into a list whose length is the length of the expansion of
@@ -890,24 +987,24 @@ expands into a vector literal, and into <code>#f</code> otherwise.
 
 <h4>Selectors</h4>
 
-<p><code>(ck-car &lt;pair&gt;)</code></p>
+<p id="ck-car"><code>(ck-car &lt;pair&gt;)</code></p>
 
 <p>
   Expands into the car of the expansion of  <code>&lt;pair&gt;</code>.  It is an error if
   <code>&lt;pair&gt;</code> does not expand into a pair.
 </p>
 
-<p><code>(ck-cdr &lt;pair&gt;)</code></p>
+<p id="ck-cdr"><code>(ck-cdr &lt;pair&gt;)</code></p>
 
 <p>
   Expands into the cdr of the expansion of  <code>&lt;pair&gt;</code>.  It is an error if
   <code>&lt;pair&gt;</code> does not expand into a pair.
 </p>
 
-<p><code>(ck-caar &lt;pair&gt;)</code></p>
-<p><code>(ck-cadr &lt;pair&gt;)</code></p>
-<p><code>(ck-cdar &lt;pair&gt;)</code></p>
-<p><code>(ck-cddr &lt;pair&gt;)</code></p>
+<p id="ck-caar"><code>(ck-caar &lt;pair&gt;)</code></p>
+<p id="ck-cadr"><code>(ck-cadr &lt;pair&gt;)</code></p>
+<p id="ck-cdar"><code>(ck-cdar &lt;pair&gt;)</code></p>
+<p id="ck-cddr"><code>(ck-cddr &lt;pair&gt;)</code></p>
  
 <p>
   Semantically equivalent to <code>(ck-car (ck-car
@@ -916,16 +1013,16 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   <code>(ck-cdr (ck-cdr &lt;pair&gt;))</code>.
 </p>
 
-<p><code>(ck-first &lt;list&gt; ...)</code></p>
-<p><code>(ck-second &lt;list&gt; ...)</code></p>
-<p><code>(ck-third &lt;list&gt; ...)</code></p>
-<p><code>(ck-fourth &lt;list&gt; ...)</code></p>
-<p><code>(ck-fifth &lt;list&gt; ...)</code></p>
-<p><code>(ck-sixth &lt;list&gt; ...)</code></p>
-<p><code>(ck-seventh &lt;list&gt; ...)</code></p>
-<p><code>(ck-eighth &lt;list&gt; ...)</code></p>
-<p><code>(ck-ninth &lt;list&gt; ...)</code></p>
-<p><code>(ck-tenth &lt;list&gt; ...)</code></p>
+<p id="ck-first"><code>(ck-first &lt;list&gt; ...)</code></p>
+<p id="ck-second"><code>(ck-second &lt;list&gt; ...)</code></p>
+<p id="ck-third"><code>(ck-third &lt;list&gt; ...)</code></p>
+<p id="ck-fourth"><code>(ck-fourth &lt;list&gt; ...)</code></p>
+<p id="ck-fifth"><code>(ck-fifth &lt;list&gt; ...)</code></p>
+<p id="ck-sixth"><code>(ck-sixth &lt;list&gt; ...)</code></p>
+<p id="ck-seventh"><code>(ck-seventh &lt;list&gt; ...)</code></p>
+<p id="ck-eighth"><code>(ck-eighth &lt;list&gt; ...)</code></p>
+<p id="ck-ninth"><code>(ck-ninth &lt;list&gt; ...)</code></p>
+<p id="ck-tenth"><code>(ck-tenth &lt;list&gt; ...)</code></p>
 
 <p>
   Expands into the first, second, third, ... element of the expansion
@@ -935,9 +1032,9 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>).
 </p>
 
-<p><code>(ck-list-tail &lt;list&gt; &lt;k&gt;)</code></p>
+<p id="ck-list-tail"><code>(ck-list-tail &lt;list&gt; &lt;k&gt;)</code></p>
 
-<p><code>(ck-list-ref &lt;list&gt; &lt;k&gt;)</code></p>
+<p id="ck-list-ref"><code>(ck-list-ref &lt;list&gt; &lt;k&gt;)</code></p>
 
 <p>
   Expands into the <em>k</em>th element of the expansion
@@ -947,7 +1044,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   and <code>&lt;k&gt;</code> do not expand into lists.
 </p>
 
-<p><code>(ck-take &lt;list&gt; &lt;k&gt;)</code></p>
+<p id="ck-take"><code>(ck-take &lt;list&gt; &lt;k&gt;)</code></p>
 
 <p>
   Expands into the sublist consisting of the first <em>k</em> elements
@@ -959,7 +1056,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
 </p>
 
-<p><code>(ck-drop &lt;list&gt; &lt;k&gt;)</code></p>
+<p id="ck-drop"><code>(ck-drop &lt;list&gt; &lt;k&gt;)</code></p>
 
 <p>
   Expands into the sublist of the expansion
@@ -967,13 +1064,12 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   on the left as the expansion of <code>&lt;k&gt;<sub>2</sub></code>
   has elements.  It is an error if <code>&lt;list&gt;</code>
   and <code>&lt;k&gt;</code> do not expand into lists.
-  (<code>Ck-drop</code> is an alternative name, analogously
+  (<code>Ck-drop</code> is an alternative name to <code>list-tail</code>, analogously
   to <code>drop</code> from
   <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
-
 </p>
 
-<p><code>(ck-take-right &lt;list&gt;
+<p id="ck-take-right"><code>(ck-take-right &lt;list&gt;
 &lt;k&gt;)</code></p>
 
 <p>
@@ -987,7 +1083,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
 </p>
 
-<p><code>(ck-drop-right &lt;list&gt; &lt;k&gt;)</code></p>
+<p id="ck-drop-right"><code>(ck-drop-right &lt;list&gt; &lt;k&gt;)</code></p>
 
 <p>
   Expands into the sublist consisting of all but the last <em>k</em>
@@ -1000,9 +1096,27 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
 </p>
 
+<p id="ck-last"><code>(ck-last &lt;pair&gt;)</code></p>
+
+<p>Expands into the last element of the expansion
+  of <code>&lt;pair&gt;</code>.  It is an error
+  if <code>&lt;pair&gt;</code> does not expand into a (possibly
+  dotted) list.  (Analogous to <code>last</code> from
+  <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
+<p>
+
+<p id="ck-last-pair"><code>(ck-last-pair &lt;pair&gt;)</code></p>
+
+<p>Expands into the last pair of the expansion
+  of <code>&lt;pair&gt;</code>.  It is an error
+  if <code>&lt;pair&gt;</code> does not expand into a (possibly
+  dotted) list.  (Analogous to <code>last-pair</code> from
+  <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
+<p>
+
 <h4>Miscellaneous</h4>
 
-<p><code>(ck-append &lt;list&gt; ...)</code></p>
+<p id="ck-append"><code>(ck-append &lt;list&gt; ...)</code></p>
 
 <p>
   Expands into a (possibly improper) list that is the concatenation of the
@@ -1011,7 +1125,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   expand into a proper list.
 </p>
 
-<p><code>(ck-reverse &lt;list&gt;)</code></p>
+<p id="ck-reverse"><code>(ck-reverse &lt;list&gt;)</code></p>
 
 <p>Expands into a list whose elements are the elements of the
   expansion of <code>&lt;list&gt;</code> in reverse order.  It is an
@@ -1020,7 +1134,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
 
 <h4>Folding, unfolding and mapping</h4>
 
-<p><code>(ck-fold &lt;proc&gt; &lt;nil&gt; &lt;list&gt; ...)</code></p>
+<p id="ck-fold"><code>(ck-fold &lt;proc&gt; &lt;nil&gt; &lt;list&gt; ...)</code></p>
 
 <p>
   Expands into the expansion &lt;nil&gt; if at least one of
@@ -1036,7 +1150,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   1</a>.)
 </p>
 
-<p><code>(ck-fold-right &lt;proc&gt; &lt;nil&gt; &lt;list&gt; ...)</code></p>
+<p id="ck-fold-right"><code>(ck-fold-right &lt;proc&gt; &lt;nil&gt; &lt;list&gt; ...)</code></p>
 
 <p>
   Expands into the expansion &lt;nil&gt; if at least one of
@@ -1050,7 +1164,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   1</a>.)
 </p>
 
-<p><code>(ck-unfold &lt;stop?&gt; &lt;mapper&gt; &lt;successor&gt;
+<p id="ck-unfold"><code>(ck-unfold &lt;stop?&gt; &lt;mapper&gt; &lt;successor&gt;
 &lt;seed&gt; &lt;tail-mapper&gt;)</code></p>
 <p><code>(ck-unfold &lt;stop??&gt; &lt;mapper&gt; &lt;successor&gt; &lt;seed&gt;)</code></p>
 
@@ -1065,9 +1179,9 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
 </p>
 
-<p><code>(ck-unfold-right &lt;stop?&gt; &lt;mapper&gt; &lt;successor&gt;
+<p id="ck-unfold-right"><code>(ck-unfold-right &lt;stop?&gt; &lt;mapper&gt; &lt;successor&gt;
 &lt;seed&gt; &lt;tail&gt;)</code></p>
-<p><code>(ck-unfold-right &lt;stop?&gt; &lt;mapper&gt; &lt;successor&gt; &lt;seed&gt;)</code></p>
+<p id="ck-"><code>(ck-unfold-right &lt;stop?&gt; &lt;mapper&gt; &lt;successor&gt; &lt;seed&gt;)</code></p>
 
 <p>
   Expands into the expansion of <code>&lt;tail&gt;</code>
@@ -1081,7 +1195,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
 </p>
 
-<p><code>(ck-map &lt;proc&gt; &lt;list&gt; ...)</code></p>
+<p id="ck-map"><code>(ck-map &lt;proc&gt; &lt;list&gt; ...)</code></p>
 
 <p>
   Expands into the empty list if at least one
@@ -1091,7 +1205,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   <code>(&lt;head&gt; . &lt;tail&gt;)</code>.
 </p>
 
-<p><code>(ck-append-map &lt;proc&gt; &lt;list&gt; ...)</code></p>
+<p id="ck-append-map"><code>(ck-append-map &lt;proc&gt; &lt;list&gt; ...)</code></p>
 
 <p>
   Expands into the empty list if at least one
@@ -1105,7 +1219,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
 
 <h4>Filtering</h4>
 
-<p><code>(ck-filter &lt;pred&gt; &lt;list&gt; ...)</code></p>
+<p id="ck-filter"><code>(ck-filter &lt;pred&gt; &lt;list&gt; ...)</code></p>
 
 <p>Expands into a list consisting of those elements <em>element</em>;
   of the expansion of <code>&lt;list&gt;</code> in order, for
@@ -1115,7 +1229,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)  
 </p>
 
-<p><code>(ck-remove &lt;pred&gt; &lt;list&gt; ...)</code></p>
+<p id="ck-remove"><code>(ck-remove &lt;pred&gt; &lt;list&gt; ...)</code></p>
 
 <p>Expands into a list consisting of those elements <em>element</em>;
   of the expansion of <code>&lt;list&gt;</code> in order for
@@ -1127,7 +1241,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
 
 <h4>Searching</h4>
 
-<p><code>(ck-find &lt;pred&gt; &lt;list&gt;)</code></p>
+<p id="ck-find"><code>(ck-find &lt;pred&gt; &lt;list&gt;)</code></p>
 
 <p>Expands into the first element <em>element</em> of the expansion
   of <code>&lt;list&gt;</code> for
@@ -1140,7 +1254,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
 </p>
 
-<p><code>(ck-find-tail &lt;pred&gt; &lt;list&gt;)</code></p>
+<p id="ck-find-tail"><code>(ck-find-tail &lt;pred&gt; &lt;list&gt;)</code></p>
 
 <p>Expands into the first pair <em>pair</em> of the expansion
   of <code>&lt;list&gt;</code> for
@@ -1153,7 +1267,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
 </p>
 
-<p><code>(ck-take-while &lt;pred&gt; &lt;list&gt;)</code></p>
+<p id="ck-take-while"><code>(ck-take-while &lt;pred&gt; &lt;list&gt;)</code></p>
 
 <p>Expands into the longest initial sublist consisting of
   those <em>element</em>s of the expansion of <code>&lt;list&gt;</code>
@@ -1166,7 +1280,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
 </p>
 
-<p><code>(ck-drop-while &lt;pred&gt; &lt;list&gt;)</code></p>
+<p id="ck-drop-while"><code>(ck-drop-while &lt;pred&gt; &lt;list&gt;)</code></p>
 
 <p>Expands into the first pair <em>pair</em> of the expansion
   of <code>&lt;list&gt;</code> for
@@ -1179,7 +1293,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
 </p>
 
-<p><code>(ck-any &lt;pred&gt; &lt;list&gt; ...)</code></p>
+<p id="ck-any"><code>(ck-any &lt;pred&gt; &lt;list&gt; ...)</code></p>
 
 <p>Expands into <code>#f</code> if at least one of
   the <code>&lt;list&gt;</code>s expands into the empty list.  Expands into the expansion of
@@ -1192,7 +1306,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
 </p>
 
-<p><code>(ck-every &lt;pred&gt; &lt;list&gt; ...)</code></p>
+<p id="ck-every"><code>(ck-every &lt;pred&gt; &lt;list&gt; ...)</code></p>
 
 <p>Expands into <code>#f</code> if at least one of
   the <code>&lt;list&gt;</code>s expands into the empty list.  Expands into the expansion of
@@ -1205,7 +1319,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
 </p>
 
-<p><code>(ck-member &lt;obj&gt; &lt;list&gt; &lt;compare&gt;)</code></p>
+<p id="ck-member"><code>(ck-member &lt;obj&gt; &lt;list&gt; &lt;compare&gt;)</code></p>
 <p><code>(ck-member &lt;obj&gt; &lt;list&gt;)</code></p>
 
 <p>Expands into the expansion of <code>(ck-find-tail (ck-cut &lt;compare&gt; &lt;obj&gt; <>)
@@ -1216,7 +1330,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
 
 <h4>Association lists</h4>
 
-<p><code>(ck-assoc &lt;key&gt; &lt;alist&gt; &lt;compare&gt;)</code></p>
+<p id="ck-assoc"><code>(ck-assoc &lt;key&gt; &lt;alist&gt; &lt;compare&gt;)</code></p>
 <p><code>(ck-assoc &lt;key&gt; &lt;alist&gt;)</code></p>
 
 <p>Expands into the first element <em>element</em> of the expansion
@@ -1230,7 +1344,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   association list, a list of pairs.
 </p>
 
-<p><code>(ck-alist-delete &lt;key&gt; &lt;alist&gt; &lt;compare&gt;)</code></p>
+<p id="ck-alist-delete"><code>(ck-alist-delete &lt;key&gt; &lt;alist&gt; &lt;compare&gt;)</code></p>
 <p><code>(ck-alist-delete &lt;key&gt; &lt;alist&gt;)</code></p>
 
 <p>
@@ -1254,31 +1368,32 @@ expands into a vector literal, and into <code>#f</code> otherwise.
 The following operations are analogous to the set operations on lists
 from <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.
 
-<p><code>(ck-set&lt;= &lt;compare&gt; &lt;list&gt ...)</code></p>
+<p id="ck-set<="><code>(ck-set&lt;= &lt;compare&gt; &lt;list&gt ...)</code></p>
 
 <p>Expands into <code>#t</code> if the elements of the expansion of
   the <code>&lt;list&gt;</code>s form an increasing tower of sets,
   where <em>element<sub>1</sub></em> and <em>element<sub>2</sub></em>
   are considered equal
-  if <code>(ck-call 'compare <em>element<sub>1</sub></em> <em>element<sub>2</sub></em>)</code>
+  if <code>(ck-call &lt;compare&gt; <em>element<sub>1</sub></em> <em>element<sub>2</sub></em>)</code>
   does not expand into <code>#f</code>.  It is an error if any of
   the <code>&lt;list&gt;</code>s do not expand into a list.
 </p>
 
-<p><code>(ck-set= &lt;compare&gt; &lt;list&gt;<sub>1</sub> &lt;list&gt ...)</code></p>
+<p id="ck-set="><code>(ck-set= &lt;compare&gt; &lt;list&gt;<sub>1</sub> &lt;list&gt ...)</code></p>
 
 <p>Expands into <code>#t</code> if the elements of the expansion of
   the <code>&lt;list&gt;</code>s each form the same set as the
   elements of the expansion of <code>&lt;list&gt;<sub>1</sub></code>,
   where <em>element<sub>1</sub></em> and <em>element<sub>2</sub></em>
   are considered equal
-  if <code>(ck-call 'compare <em>element<sub>1</sub></em> <em>element<sub>2</sub></em>)</code>
+  if <code>(ck-call &lt;compare&gt; <em>element<sub>1</sub></em> <em>element<sub>2</sub></em>)</code>
   does not expand into <code>#f</code>.  It is an error
   if <code>&lt;list&gt;<sub>1</sub></code> or any of
   the <code>&lt;list&gt;</code>s do not expand into a list.
 </p>
 
-<p><code>(ck-set-adjoin &lt;compare&gt; &lt;list&gt; &lt;element&gt; ...)</code></p>
+<p id="ck-set-adjoin"><code>(ck-set-adjoin &lt;compare&gt;
+&lt;list&gt; &lt;element&gt; ...)</code></p>
 
 <p>Expands into a list consisting of the elements of the expansion
   of <code>&lt;list&gt;</code> and the expansion of
@@ -1291,7 +1406,7 @@ from <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.
   if <code>&lt;list&gt;</code> does not expand into a list.
 </p>
 
-<p><code>(ck-set-union &lt;compare&gt; &lt;list&gt; ...)</code></p>
+<p id="ck-set-union"><code>(ck-set-union &lt;compare&gt; &lt;list&gt; ...)</code></p>
 
 <p>Expands into a list constructured by adjoining (as
   in <code>ck-set-adjoin</code>) the elements of the expansions of
@@ -1300,7 +1415,8 @@ from <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.
   if the <code>&lt;list&gt;</code>s do not expand into a list.
 </p>
 
-<p><code>(ck-intersection &lt;compare&gt; &lt;list&gt;<sub>1</sub> &lt;list&gt; ...)</code></p>
+<p id="ck-set-intersection"><code>(ck-set-intersection
+&lt;compare&gt; &lt;list&gt;<sub>1</sub> &lt;list&gt; ...)</code></p>
 
 <p>Expands into the sublist of the expansion
   of <code>&lt;list&gt;<sub>1</sub></code> (as
@@ -1308,13 +1424,14 @@ from <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.
   <code>&lt;list&gt;</code>s,
   where <em>element<sub>1</sub></em> and <em>element<sub>2</sub></em>
   are considered equal
-  if <code>(ck-call 'compare <em>element<sub>1</sub></em> <em>element<sub>2</sub></em>)</code>
+  if <code>(ck-call &lt;compare%gt; <em>element<sub>1</sub></em> <em>element<sub>2</sub></em>)</code>
   does not expand into <code>#f</code>.  It is an error
   if <code>&lt;list&gt;<sub>1</sub></code> or any of
   the <code>&lt;list&gt;</code>s do not expand into a list.
 </p>
 
-<p><code>(ck-difference &lt;compare&gt; &lt;list&gt;<sub>1</sub> &lt;list&gt; ...)</code></p>
+<p id="ck-set-difference"><code>(ck-set-difference &lt;compare&gt;
+&lt;list&gt;<sub>1</sub> &lt;list&gt; ...)</code></p>
 
 <p>Expands into the sublist of the expansion
   of <code>&lt;list&gt;<sub>1</sub></code> (as
@@ -1323,13 +1440,13 @@ from <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.
   <code>&lt;list&gt;</code>s,
   where <em>element<sub>1</sub></em> and <em>element<sub>2</sub></em>
   are considered equal
-  if <code>(ck-call 'compare <em>element<sub>1</sub></em> <em>element<sub>2</sub></em>)</code>
+  if <code>(ck-call &lt;compare&gt; <em>element<sub>1</sub></em> <em>element<sub>2</sub></em>)</code>
   does not expand into <code>#f</code>.  It is an error
   if <code>&lt;list&gt;<sub>1</sub></code> or any of
   the <code>&lt;list&gt;</code>s do not expand into a list.
 </p>
 
-<p><code>(ck-xor &lt;compare&gt; &lt;list&gt;<sub>1</sub> &lt;list&gt;<sub>2</sub>)</code></p>
+<p id="ck-set-xor"><code>(ck-set-xor &lt;compare&gt; &lt;list&gt;<sub>1</sub> &lt;list&gt;<sub>2</sub>)</code></p>
 
 <p>
   Expands into a list consisting of those elements of the expansion
@@ -1339,7 +1456,7 @@ from <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.
   the expansion of <code>&lt;list&gt;<sub>1</sub></code>,
   where <em>element<sub>1</sub></em> and <em>element<sub>2</sub></em>
   are considered equal if <code>(ck-call
-  'compare <em>element<sub>1</sub></em> <em>element<sub>2</sub></em>)</code>
+  &lt;compare&gt; <em>element<sub>1</sub></em> <em>element<sub>2</sub></em>)</code>
   does not expand into <code>#f</code>.  It is an error
   if <code>&lt;list&gt;<sub>1</sub></code> or
   the <code>&lt;list&gt;<sub>2</sub></code>s do not expand into a
@@ -1348,13 +1465,13 @@ from <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.
 
 <h3 id="Vectorprocessing">Vector processing</h3>
 
-<p><code>(ck-vector &lt;element&gt; ...)</code></p>
+<p id="ck-vector"><code>(ck-vector &lt;element&gt; ...)</code></p>
 
 <p>
   Expands into a vector whose elements are the expansions of the <code>&lt;element&gt;</code>s.
 </p>
 
-<p><code>(ck-list-&gt;vector &lt;list&gt;)</code></p>
+<p id="ck-list->vector"><code>(ck-list-&gt;vector &lt;list&gt;)</code></p>
 
 <p>
   Expands into a vector whose elements are the elements of the
@@ -1362,7 +1479,7 @@ from <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.
   if <code>&lt;list&gt;</code> does not expand into a (proper) list.
 </p>
 
-<p><code>(ck-vector-&gt;list &lt;vector&gt;)</code></p>
+<p id="ck-vector"><code>(ck-vector-&gt;list &lt;vector&gt;)</code></p>
 
 <p>
   Expands into a list whose elements are the elements of the
@@ -1370,7 +1487,7 @@ from <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.
   if <code>&lt;vector&gt;</code> does not expand into a vector.
 </p>
 
-<p><code>(ck-vector-map &lt;proc&gt; &lt;vector&gt; ...)</code></p>
+<p id="ck-vector-map"><code>(ck-vector-map &lt;proc&gt; &lt;vector&gt; ...)</code></p>
 
 <p>
   Expands into the empty list if at least one
@@ -1381,7 +1498,7 @@ from <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.
   <code>`#u(,<em>head</em> ,@<em>tail</em>)</code>.
 </p>
 
-<p><code>(ck-vector-ref &lt;vector&gt; &lt;k&gt;)</code></p>
+<p id="ck-vector-ref"><code>(ck-vector-ref &lt;vector&gt; &lt;k&gt;)</code></p>
 
 <p>
   Expands into the <em>k</em>th element of the expansion
@@ -1393,21 +1510,21 @@ from <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.
 
 <h3 id="Combinatorics">Combinatorics</h3>
 
-<p><code>(ck-zero)</code></p>
-<p><code>(ck-one)</code></p>
-<p><code>(ck-two)</code></p>
-<p><code>(ck-three)</code></p>
-<p><code>(ck-four)</code></p>
-<p><code>(ck-five)</code></p>
-<p><code>(ck-six)</code></p>
-<p><code>(ck-seven)</code></p>
-<p><code>(ck-eight)</code></p>
-<p><code>(ck-nine)</code></p>
-<p><code>(ck-ten)</code></p>
+<p id="ck-0"><code>(ck-0)</code></p>
+<p id="ck-1"><code>(ck-1)</code></p>
+<p id="ck-2"><code>(ck-2)</code></p>
+<p id="ck-3"><code>(ck-3)</code></p>
+<p id="ck-4"><code>(ck-4)</code></p>
+<p id="ck-5"><code>(ck-5)</code></p>
+<p id="ck-6"><code>(ck-6)</code></p>
+<p id="ck-7"><code>(ck-7)</code></p>
+<p id="ck-8"><code>(ck-8)</code></p>
+<p id="ck-9"><code>(ck-9)</code></p>
+<p id="ck-10"><code>(ck-10)</code></p>
 
 <p>Expands into a list of zero, one, two, ... pairwise different elements.</p>
 
-<p><code>(ck-= &lt;list&gt;<sub>1</sub> &lt;list&gt; ...)</code></p>
+<p id="ck-="><code>(ck-= &lt;list&gt;<sub>1</sub> &lt;list&gt; ...)</code></p>
 
 <p>
   Expands into <code>#t</code>
@@ -1419,7 +1536,7 @@ from <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.
   into lists.
 </p>
 
-<p><code>(ck-&lt; &lt;list&gt; ...)</code></p>
+<p id="ck-<"><code>(ck-&lt; &lt;list&gt; ...)</code></p>
 
 <p>
   Expands into <code>#t</code>
@@ -1429,7 +1546,7 @@ from <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.
   do not expand into lists.
 </p>
 
-<p><code>(ck-&lt;= &lt;list&gt; ...)</code></p>
+<p id="ck-<="><code>(ck-&lt;= &lt;list&gt; ...)</code></p>
 
 <p>
   Expands into <code>#t</code>
@@ -1439,7 +1556,7 @@ from <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.
   do not expand into lists.
 </p>
 
-<p><code>(ck-&gt; &lt;list&gt; ...)</code></p>
+<p id="ck->"><code>(ck-&gt; &lt;list&gt; ...)</code></p>
 
 <p>
   Expands into <code>#t</code>
@@ -1449,7 +1566,7 @@ from <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.
   do not expand into lists.
 </p>
 
-<p><code>(ck-&gt;= &lt;list&gt; ...)</code></p>
+<p id="ck->="><code>(ck-&gt;= &lt;list&gt; ...)</code></p>
 
 <p>
   Expands into <code>#t</code>
@@ -1459,35 +1576,35 @@ from <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.
   do not expand into lists.
 </p>
 
-<p><code>(ck-zero? &lt;list&gt;)</code></p>
+<p id="ck-zero?"><code>(ck-zero? &lt;list&gt;)</code></p>
 
 <p>Expands into <code>#t</code> if <code>&lt;list&gt;</code> expands
 into the empty list, and into <code>#f</code> otherwise.  It is an
   error if <code>&lt;list&gt;</code> does not expand into a list.
 </p>
 
-<p><code>(ck-even? &lt;list&gt;)</code></p>
+<p id="ck-even?"><code>(ck-even? &lt;list&gt;)</code></p>
 
 <p>Expands into <code>#t</code> if <code>&lt;list&gt;</code> expands
 into the list with an even number of elements, and into <code>#f</code> otherwise.  It is an
   error if <code>&lt;list&gt;</code> does not expand into a list.
 </p>
 
-<p><code>(ck-odd? &lt;list&gt;)</code></p>
+<p id="ck-odd?"><code>(ck-odd? &lt;list&gt;)</code></p>
 
 <p>Expands into <code>#t</code> if <code>&lt;list&gt;</code> expands
 into the list with an odd number of elements, and into <code>#f</code> otherwise.  It is an
   error if <code>&lt;list&gt;</code> does not expand into a list.
 </p>
 
-<p><code>(ck-+ &lt;list&gt; ...)</code></p>
+<p id="ck-+"><code>(ck-+ &lt;list&gt; ...)</code></p>
 
 <p>Expands into a list whose elements are the elements of the expansions of the
   <code>&lt;list&gt;</code>s in left-to-right order.  It is an
   error if the <code>&lt;list&gt;</code>s do not expand into a list.
 </p>
 
-<p><code>(ck-- &lt;list&gt;<sub>1</sub> &lt;list&gt; ...)</code></p>
+<p id="ck--"><code>(ck-- &lt;list&gt;<sub>1</sub> &lt;list&gt; ...)</code></p>
 
 <p>Expands into a list whose elements are all but the last <em>k</em>
   elements of the expansion of the
@@ -1501,7 +1618,7 @@ into the list with an odd number of elements, and into <code>#f</code> otherwise
   in a list with less then <em>k</em> elements.
 </p>
 
-<p><code>(ck-* &lt;list&gt; ...)</code></p>
+<p id="ck-*"><code>(ck-* &lt;list&gt; ...)</code></p>
 
 <p>Expands into a list whose elements are the elements of the
   cartesian product of the expansions of
@@ -1511,7 +1628,7 @@ into the list with an odd number of elements, and into <code>#f</code> otherwise
   error if the <code>&lt;list&gt;</code>s do not expand into lists.
 </p>
 
-<p><code>(ck-quotient &lt;list&gt; &lt;k&gt;)</code></p>
+<p id="ck-quotient"><code>(ck-quotient &lt;list&gt; &lt;k&gt;)</code></p>
 
 <p>Expands into a list of each <em>k</em>th element in
   left-to-right order of the expansion
@@ -1522,7 +1639,7 @@ into the list with an odd number of elements, and into <code>#f</code> otherwise
   or <code>&lt;k&gt;</code> do not expand into lists.
 </p>
 
-<p><code>(ck-remainder &lt;list&gt; &lt;k&gt;)</code></p>
+<p id="ck-remainder"><code>(ck-remainder &lt;list&gt; &lt;k&gt;)</code></p>
 
 <p>Expands into a smallest tail of the expansion
   of <code>&lt;list&gt;</code> such that the number of elements before the tail
@@ -1533,7 +1650,7 @@ into the list with an odd number of elements, and into <code>#f</code> otherwise
   or <code>&lt;k&gt;</code> do not expand into lists.
 </p>
 
-<p><code>(ck-fact &lt;list&gt;)</code></p>
+<p id="ck-fact"><code>(ck-fact &lt;list&gt;)</code></p>
 
 <p>Expands into a list of all permutations of the expansion of <code>&lt;list&gt;</code> in
   lexicographic left-to-right order.
@@ -1542,7 +1659,7 @@ into the list with an odd number of elements, and into <code>#f</code> otherwise
   does not expand into a list.
 </p>
 
-<p><code>(ck-binom &lt;list&gt; &lt;k&gt;)</code></p>
+<p id="ck-binom"><code>(ck-binom &lt;list&gt; &lt;k&gt;)</code></p>
 
 <p>Expands into a list of all <em>k</em>-element (ordered) sublists in
   lexicographic left-to-right order of the expansion
@@ -1614,7 +1731,7 @@ syntax-rules: macros that compose better</em></a>.
   message</a>).
 </p>
 
-<h1>Copyright</h1> Copyright (C) Marc Nieper-Wi&szlig;kirchen (2016).
+<h1>Copyright</h1> Copyright (C) Marc Nieper-Wi&szlig;kirchen (2016, 2017).
 All Rights Reserved.
 
 <p>
