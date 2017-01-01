@@ -95,9 +95,9 @@ to the R7RS.
   In order to discourage people from refraining from the beauty
   of <code>syntax-rules</code> by employing unhygienic low-level macro
   systems (or building on run-time evaluation when expansion at
-  compile-time would be beneficial to running time), this SRFI
+  compile time would be beneficial to running time), this SRFI
   defines a custom macro transformer
-  <code>ck-macro-transformer</code>, which allows to write composable
+  <code>ck-macro-transformer</code>, which allows one to write composable
   macros, while retaining the hygiene and beauty of <code>syntax-rules</code>.
   This high-level system of composable macros is based on the idea of
   CK-macros, which has
@@ -151,7 +151,7 @@ in a <a href="srfi/148.macros.scm">file of the sample implementation</a>.
  (define-syntax letrec
    (ck-macro-transformer ()
      ((letrec ((var1 init1) ...) body ...)
-      ((generate-temporaries) =&gt; '(temp1 ...))
+      ((ck-generate-temporaries) =&gt; '(temp1 ...))
       '(let ((var1 &lt;undefined&gt;) ...)
         (let ((temp1 init1) ...)
             (set! var1 temp1)
@@ -281,7 +281,7 @@ well-known <code>syntax-rules</code>, namely of one of the two forms:
   the difference between a composable macro and
   a <code>syntax-rules</code>-macro lies in how the input elements
   corresponding to the <code>&lt;pattern&gt;</code>s above are expanded
-  before a macro use is expanded: <code>syntax-rules</code>-macros
+  before a macro use is expanded: <code>syntax-rules</code> macros
   never expand their arguments before evaluation.  On the other
   hand, <code>ck-macro-transformer</code> macros expand those input
   elements whose corresponding patterns are of the
@@ -306,8 +306,8 @@ well-known <code>syntax-rules</code>, namely of one of the two forms:
    a)
 </pre>
 
-<p>One more extension when compared with
-  ordinary <code>syntax-rules</code>s macros is available, namely the
+<p>One more extension is available when compared with
+  ordinary <code>syntax-rules</code> macros, namely the
   <code>&lt;pattern binding spec&gt;</code>s, which are of the form:
 </p>
 
@@ -502,7 +502,7 @@ the following exceptions and additions:
     it is a quasiquoted datum and the
     pattern <code>&lt;pattern&gt;</code> matches the expansion of the
     quasiquoted datum (see below).  In other words, unquoted arguments
-    (or unquotated elements in quasiquoted arguments) to quoted patterns that
+    (or unquoted elements in quasiquoted arguments) to quoted patterns that
     are ck-macro uses are expanded before they are matched
     (<em>call-by-value</em> semantics, different from
     the <em>call-by-reference</em> semantics of
@@ -628,7 +628,7 @@ the following exceptions and additions:
   expression.</p>
 
 <p><i>Rationale: That ck-macro uses that expand into expressions have
-    to be wrapped in <code>ck-expression</code>-forms is to ensure
+    to be wrapped in <code>ck-expression</code> forms to ensure
     that this SRFI can be portably implemented.  If Scheme had
     a <code>let(rec)-syntax</code> form that spliced its body into the
     outer scope, this auxiliary <code>ck-expression</code> wouldn't be necessary.</i>
@@ -641,7 +641,7 @@ ck-macro datum&gt;<sub>2</sub> ...)</code></p>
 ck-macro datum&gt;<sub>2</sub> ... &lt;&gt; &lt;ellipsis&gt;)</code></p>
 
 <p>
-  Expands into a ck-macro that accepts as much input elements as there are slots (elements of the form
+  Expands into a ck-macro that accepts as many input elements as there are slots (elements of the form
   <code>&lt;&gt;</code>) amongst the <code>&lt;ck-macro
     datum&gt;</code>s.  When this ck-macro is used, it expands into the expansion of
   <code>(&lt;slot or ck-macro datum&gt;<sub>1</sub> &lt;slot or
@@ -774,7 +774,7 @@ does not expand into <code>#f</code>, and into <code>#t</code> otherwise.
 
 <p>Expands into the expansion of the last <code>&lt;ck-macro
     datum&gt;</code> (in left-to-right order) if all previous
-    later <code>&lt;ck-macro datum&gt;</code>s do not expand
+    <code>&lt;ck-macro datum&gt;</code>s do not expand
     into <code>#f</code>, and does not expand any <code>&lt;ck-macro
     datum&gt;</code>s after the first that expands
     into <code>#f</code>; expands into <code>#f</code> otherwise.
@@ -783,39 +783,39 @@ does not expand into <code>#f</code>, and into <code>#t</code> otherwise.
 <p><code>(ck-null? &lt;ck-macro datum&gt;)</code></p>
 
 <p>Expands into <code>#t</code> if <code>&lt;ck-macro datum&gt;</code>
-expands into the empty list, and into <code>#f</code>, otherwise.
+expands into the empty list, and into <code>#f</code> otherwise.
 </p>
 
 <p><code>(ck-pair? &lt;ck-macro datum&gt;)</code></p>
 
 <p>Expands into <code>#t</code> if <code>&lt;ck-macro datum&gt;</code>
-expands into a pair, and into <code>#f</code>, otherwise.
+expands into a pair, and into <code>#f</code> otherwise.
 </p>
 
 
 <p><code>(ck-list? &lt;ck-macro datum&gt;)</code></p>
 
 <p>Expands into <code>#t</code> if <code>&lt;ck-macro datum&gt;</code>
-expands into a (proper) list, and into <code>#f</code>, otherwise.
+expands into a (proper) list, and into <code>#f</code> otherwise.
 </p>
 
 <p><code>(ck-boolean? &lt;ck-macro datum&gt;)</code></p>
 
 <p>Expands into <code>#t</code> if <code>&lt;ck-macro datum&gt;</code>
-expands into a boolean literal, and into <code>#f</code>, otherwise.
+expands into a boolean literal, and into <code>#f</code> otherwise.
 </p>
 
 <p><code>(ck-vector? &lt;ck-macro datum&gt;)</code></p>
 
 <p>Expands into <code>#t</code> if <code>&lt;ck-macro datum&gt;</code>
-expands into a vector literal, and into <code>#f</code>, otherwise.
+expands into a vector literal, and into <code>#f</code> otherwise.
 </p>
 
 <p><code>(ck-symbol? &lt;ck-macro datum&gt;)</code></p>
 
 <p>
   Expands into <code>#t</code> if <code>&lt;ck-macro datum&gt;</code>
-  expands into a symbol, and into <code>#f</code>, otherwise.
+  expands into a symbol, and into <code>#f</code> otherwise.
 </p>
 
 <p><code>(ck-bound-identifier=? &lt;identifier&gt;
@@ -825,7 +825,7 @@ expands into a vector literal, and into <code>#f</code>, otherwise.
   Expands into <code>#t</code> if <code>&lt;identifier&gt;</code>
   and <code>&lt;input&gt;</code> both expand into symbols
   that denote the same identifier (in the expansion context), and
-  into <code>#f</code>, otherwise.  It is an error
+  into <code>#f</code> otherwise.  It is an error
   if <code>&lt;identifier&gt;</code> does not
   expand into a symbol.
 </p>
@@ -838,7 +838,7 @@ expands into a vector literal, and into <code>#f</code>, otherwise.
   if <code>&lt;identifier&gt;</code><sub>1</sub>
   and <code>&lt;identifier&gt;</code><sub>2</sub> both expand into
   symbols such that the identifiers denoted by them have the same
-  meaning (in the expansion context), and into <code>#f</code>,
+  meaning (in the expansion context), and into <code>#f</code>
   otherwise.  It is an error if <code>&lt;identifier&gt;<sub>1</sub></code>
   and <code>&gt;identifier&lt;<sub>2</sub></code> do not expand into a
   symbol.
@@ -851,7 +851,7 @@ expands into a vector literal, and into <code>#f</code>, otherwise.
   Expands into <code>#t</code> if <code>&lt;ck-macro
     datum&gt;</code><sub>1</sub> and <code>&lt;ck-macro
     datum&gt;</code><sub>2</sub> are the same, and
-    into <code>#f</code>, otherwise.  Pairs, and vectors are compared
+    into <code>#f</code> otherwise.  Pairs and vectors are compared
     recursively, and symbols are compared
   using <code>ck-bound-identifier=?</code>.
 </p>
@@ -884,8 +884,8 @@ expands into a vector literal, and into <code>#f</code>, otherwise.
 <p>
   Expands into a list whose length is the length of the expansion of
   <code>&lt;k&gt;</code>.  The elements of the list are the expansion
-  of <code>&gt;element&lt;</code>.  It is an error
-  if <code>&lt;k&lt;</code> does not expand into a list.
+  of <code>&lt;element&gt;</code>.  It is an error
+  if <code>&lt;k&gt;</code> does not expand into a list.
 </p>
 
 <h4>Selectors</h4>
@@ -1006,15 +1006,15 @@ expands into a vector literal, and into <code>#f</code>, otherwise.
 
 <p>
   Expands into a (possibly improper) list that is the concatenation of the
-  expansions of the <code>&lt;list</code>s.  It is an error
-  if the <code>&lt;list&gt;</code>s but the last do not
+  expansions of the <code>&lt;list&gt;</code>s.  It is an error
+  if any of the <code>&lt;list&gt;</code>s but the last does not
   expand into a proper list.
 </p>
 
 <p><code>(ck-reverse &lt;list&gt;)</code></p>
 
 <p>Expands into a list whose elements are the elements of the
-  expansion of <code>&lt;list&gt;</code> in reversed order.  It is an
+  expansion of <code>&lt;list&gt;</code> in reverse order.  It is an
   error if <code>&lt;list&gt;</code> does not expand into a list.
 </p>
 
@@ -1055,19 +1055,19 @@ expands into a vector literal, and into <code>#f</code>, otherwise.
 <p><code>(ck-unfold &lt;stop??&gt; &lt;mapper&gt; &lt;successor&gt; &lt;seed&gt;)</code></p>
 
 <p>
-  Expands into the expansion of <code>(&lt;tail-mapper&lt;
-  &lt;seed&gt;)</code> if (&lt;stop?&gt; &lt;seed&gt;) does not expand
+  Expands into the expansion of <code>(&lt;tail-mapper&gt;
+  &lt;seed&gt;)</code> if (<code>&lt;stop?&gt; &lt;seed&gt;</code>) does not expand
   into <code>#f</code>.  Expands into the expansion of <code>(ck-cons (&lt;mapper&gt; &lt;seed&gt;)
     (ck-unfold &lt;stop?&gt; &lt;mapper&gt; &lt;successor&gt; (&lt;successor&gt; &lt;seed&gt;)
     &lt;tail-mapper&gt;)</code> otherwise.
-  If &lt;tail-mapper&gt; is omitted, it defaults to <code>(ck-constant '())</code>.
+  If <code>&lt;tail-mapper&gt;</code> is omitted, it defaults to <code>(ck-constant '())</code>.
   (Analogous to <code>unfold</code> from
   <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
 </p>
 
 <p><code>(ck-unfold-right &lt;stop?&gt; &lt;mapper&gt; &lt;successor&gt;
 &lt;seed&gt; &lt;tail&gt;)</code></p>
-<p><code>(ck-unfold-right &lt;stop??&gt; &lt;mapper&gt; &lt;successor&gt; &lt;seed&gt;)</code></p>
+<p><code>(ck-unfold-right &lt;stop?&gt; &lt;mapper&gt; &lt;successor&gt; &lt;seed&gt;)</code></p>
 
 <p>
   Expands into the expansion of <code>&lt;tail&gt;</code>
@@ -1209,7 +1209,7 @@ expands into a vector literal, and into <code>#f</code>, otherwise.
 <p><code>(ck-member &lt;obj&gt; &lt;list&gt;)</code></p>
 
 <p>Expands into the expansion of <code>(ck-find-tail (ck-cut &lt;compare&gt; &lt;obj&gt; <>)
-      &lt;list&gt;)</code>
+      &lt;list&gt;)</code>.
 
   If the input <code>&lt;compare&gt;</code> is omitted, it defaults to <code>ck-equal?</code>.
 </p>
@@ -1462,21 +1462,21 @@ from <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.
 <p><code>(ck-zero? &lt;list&gt;)</code></p>
 
 <p>Expands into <code>#t</code> if <code>&lt;list&gt;</code> expands
-into the empty list, and into <code>#f</code>, otherwise.  It is an
+into the empty list, and into <code>#f</code> otherwise.  It is an
   error if <code>&lt;list&gt;</code> does not expand into a list.
 </p>
 
 <p><code>(ck-even? &lt;list&gt;)</code></p>
 
 <p>Expands into <code>#t</code> if <code>&lt;list&gt;</code> expands
-into the list with an even number of elements, and into <code>#f</code>, otherwise.  It is an
+into the list with an even number of elements, and into <code>#f</code> otherwise.  It is an
   error if <code>&lt;list&gt;</code> does not expand into a list.
 </p>
 
 <p><code>(ck-odd? &lt;list&gt;)</code></p>
 
 <p>Expands into <code>#t</code> if <code>&lt;list&gt;</code> expands
-into the list with an odd number of elements, and into <code>#f</code>, otherwise.  It is an
+into the list with an odd number of elements, and into <code>#f</code> otherwise.  It is an
   error if <code>&lt;list&gt;</code> does not expand into a list.
 </p>
 
