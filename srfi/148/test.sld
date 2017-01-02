@@ -112,7 +112,18 @@
 		 ((ck-list 'c) => 'd)
 		 '(a d)))))
 	  (ck-expression (ck-quote (m 'foo)))))
-      
+
+      (test-equal "Pattern binding with ellipsis"
+	'(foo bar (foo))
+	(letrec-syntax
+	    ((m
+	      (ck-macro-transformer ()
+		((m 'a 'x ...)
+		 ((ck-make-list (ck-2) 'a) => '(b c))
+		 ((ck-list 'c) => 'd)
+		 '(a x ... d)))))
+	  (ck-expression (ck-quote (m 'foo 'bar)))))
+
       (test-group "General"
 
 	(test-equal "ck-cut: without ..."

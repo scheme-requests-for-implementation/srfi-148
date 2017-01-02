@@ -115,8 +115,9 @@
 
     ((ck-macro-transformer-aux1 a c e* e l* (((_ p ...) (i => v) w ... t) . r*) (r1 ...) (r2 ...))
      (ck-macro-transformer-aux1 a c e* e l* r*
-				(r1 ... ((_ p ...) (a i 'p ...)))
-				(r2 ... ((_ v 'p ...) w ... t))))
+				(r1 ... ((_ p ...) (a i '(p ...))))
+				(r2 ... ((_ v '(p ...)) w ... t))))
+
     ((ck-macro-transformer-aux1 a c e* e l* () r1* r2*)
      (begin (define-syntax a
 	      (ck-macro-transformer-aux1 c e* e l* r2*))
