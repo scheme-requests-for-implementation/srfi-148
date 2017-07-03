@@ -1,8 +1,8 @@
-* SRFI 148: Composable macros
+* SRFI 148: Eager syntax-rules
 
 ** by Marc Nieper-Wißkirchen
 
-This repository hosts [[http://srfi.schemers.org/srfi-148/][SRFI 148]]: Composable macros, a [[http://srfi.schemers.org/][Scheme Request for Implementation]].
+This repository hosts [[http://srfi.schemers.org/srfi-148/][SRFI 148]]: Eager syntax-rules, a [[http://srfi.schemers.org/][Scheme Request for Implementation]].
 
 This SRFI is in /draft/ status.
 
