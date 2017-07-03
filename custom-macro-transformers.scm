@@ -2,7 +2,7 @@
   (custom-macro-transformers
    (import (scheme base)))
   (else
-   (import (except (scheme base)
+   (import (except (scheme base) 
 		   define-syntax
 		   let-syntax
 		   letrec-syntax

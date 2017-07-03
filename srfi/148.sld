@@ -21,140 +21,140 @@
 ;; SOFTWARE.
 
 (define-library (srfi 148)
-  (export ck-macro-transformer
+  (export em-syntax-rules
 
 	  ;; General
-	  ck-expression
-	  ck-cut
-	  ck-cute
-	  ck-constant
-	  ck-quote
-	  ck-eval
-	  ck-apply
-	  ck-call
-	  ck-error
-	  ck-gensym
-	  ck-generate-temporaries
+	  em
+	  em-cut
+	  em-cute
+	  em-constant
+	  em-quote
+	  em-eval
+	  em-apply
+	  em-call
+	  em-error
+	  em-gensym
+	  em-generate-temporaries
 
 	  ;; Boolean logic
-	  ck-if
-	  ck-not
-	  ck-or
-	  ck-and
-	  ck-null?
-	  ck-pair?
-	  ck-list?
-	  ck-boolean?
-	  ck-vector?
-	  ck-symbol?
-	  ck-bound-identifier=?
-	  ck-free-identifier=?
-	  ck-equal?
+	  em-if
+	  em-not
+	  em-or
+	  em-and
+	  em-null?
+	  em-pair?
+	  em-list?
+	  em-boolean?
+	  em-vector?
+	  em-symbol?
+	  em-bound-identifier=?
+	  em-free-identifier=?
+	  em-equal?
 	  
 	  ;; Constructors
-	  ck-cons
-	  ck-cons*
-	  ck-list
-	  ck-make-list
+	  em-cons
+	  em-cons*
+	  em-list
+	  em-make-list
 	  
 	  ;; Selectors
-	  ck-car
-	  ck-cdr
-	  ck-caar
-	  ck-cadr
-	  ck-cdar
-	  ck-cddr
-	  ck-first
-	  ck-second
-	  ck-third
-	  ck-fourth
-	  ck-fifth
-	  ck-sixth
-	  ck-seventh
-	  ck-eighth
-	  ck-ninth
-	  ck-tenth
-	  ck-list-tail
-	  ck-list-ref
-	  ck-take
-	  ck-drop
-	  ck-take-right
-	  ck-drop-right
-	  ck-last
-	  ck-last-pair
+	  em-car
+	  em-cdr
+	  em-caar
+	  em-cadr
+	  em-cdar
+	  em-cddr
+	  em-first
+	  em-second
+	  em-third
+	  em-fourth
+	  em-fifth
+	  em-sixth
+	  em-seventh
+	  em-eighth
+	  em-ninth
+	  em-tenth
+	  em-list-tail
+	  em-list-ref
+	  em-take
+	  em-drop
+	  em-take-right
+	  em-drop-right
+	  em-last
+	  em-last-pair
 
 	  ;; Miscellaneous
-	  ck-append
-	  ck-reverse
+	  em-append
+	  em-reverse
 
 	  ;; Folding, unfolding, and mapping
-	  ck-fold
-	  ck-fold-right
-	  ck-unfold
-	  ck-unfold-right
-	  ck-map
-	  ck-append-map
+	  em-fold
+	  em-fold-right
+	  em-unfold
+	  em-unfold-right
+	  em-map
+	  em-append-map
 	  
 	  ;; Filtering
-	  ck-filter
-	  ck-remove
+	  em-filter
+	  em-remove
 	  
 	  ;; Searching
-	  ck-find
-	  ck-find-tail
-	  ck-take-while
-	  ck-drop-while
-	  ck-any
-	  ck-every
-	  ck-member
+	  em-find
+	  em-find-tail
+	  em-take-while
+	  em-drop-while
+	  em-any
+	  em-every
+	  em-member
 	  
 	  ;; Association lists
-	  ck-assoc
-	  ck-alist-delete
+	  em-assoc
+	  em-alist-delete
 
 	  ;; Set operationse
-	  ck-set<=
-	  ck-set=
-	  ck-set-adjoin
-	  ck-set-union
-	  ck-set-intersection
-	  ck-set-difference
-	  ck-set-xor
+	  em-set<=
+	  em-set=
+	  em-set-adjoin
+	  em-set-union
+	  em-set-intersection
+	  em-set-difference
+	  em-set-xor
 
 	  ;; Vector processing
-	  ck-vector
-	  ck-list->vector
-	  ck-vector->list
-	  ck-vector-map
-	  ck-vector-ref
+	  em-vector
+	  em-list->vector
+	  em-vector->list
+	  em-vector-map
+	  em-vector-ref
 	  
 	  ;; Combinatorics
-	  ck-0
-	  ck-1
-	  ck-2
-	  ck-3
-	  ck-4
-	  ck-5
-	  ck-6
-	  ck-7
-	  ck-8
-	  ck-9
-	  ck-10
-	  ck-=
-	  ck-<
-	  ck-<=
-	  ck->
-	  ck->=
-	  ck-zero?
-	  ck-even?
-	  ck-odd?
-	  ck-+
-	  ck--
-	  ck-*
-	  ck-quotient
-	  ck-remainder
-	  ck-fact
-	  ck-binom
+	  em-0
+	  em-1
+	  em-2
+	  em-3
+	  em-4
+	  em-5
+	  em-6
+	  em-7
+	  em-8
+	  em-9
+	  em-10
+	  em=
+	  em<
+	  em<=
+	  em>
+	  em>=
+	  em-zero?
+	  em-even?
+	  em-odd?
+	  em+
+	  em-
+	  em*
+	  em-quotient
+	  em-remainder
+	  em-fact
+	  em-binom
 	  
 	  ;; Auxiliary syntax
 	  =>
@@ -166,7 +166,7 @@
 	   "148.macros.scm"))
 
 ;; Local Variables:
-;; eval: (put 'ck-macro-transformer 'scheme-indent-function 'defun)
+;; eval: (put 'em-syntax-rules 'scheme-indent-function 'defun)
 ;; eval: (font-lock-add-keywords 'scheme-mode
-;;                               '(("(\\(ck-macro-transformer\\)\\>" 1 font-lock-keyword-face)))
+;;                               '(("(\\(em-syntax-rules\\)\\>" 1 font-lock-keyword-face)))
 ;; End:
