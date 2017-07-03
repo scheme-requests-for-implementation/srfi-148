@@ -34,19 +34,19 @@
 	10 
 	(let-syntax
 	    ((m
-	      (ck-macro-transformer ()
+	      (em-syntax-rules ()
 		((m 'a) 'a))))
 	  (m '(define x 10))
 	  x))
 
-      (test-equal "Match quoted pattern with ck-macro use"
+      (test-equal "Match quoted pattern with eager macro use"
 	10
 	(letrec-syntax
 	    ((m1
-	      (ck-macro-transformer ()
+	      (em-syntax-rules ()
 		((m1 'define 'x) '(define x))))
 	     (m2
-	      (ck-macro-transformer ()
+	      (em-syntax-rules ()
 		((m2 '(d y)) '(d y 10)))))
 	  (m2 (m1 'define 'x))
 	  x))
@@ -55,24 +55,24 @@
 	10
 	(letrec-syntax
 	    ((m
-	      (ck-macro-transformer ()
+	      (em-syntax-rules ()
 		((m a) 'a))))
 	  (m (define x 10))
 	  x))
 
-      (test-equal "CK-macro uses in expression contexts"
+      (test-equal "eager macro uses in expression contexts"
 	10
 	(letrec-syntax
 	    ((m
-	      (ck-macro-transformer ()
+	      (em-syntax-rules ()
 		((m 'a 'b) '(+ a b)))))
-	  (ck-expression (m '5 '5))))
+	  (em (m '5 '5))))
 
       (test-equal "Self-quoting literals"
 	10
 	(letrec-syntax
 	    ((m
-	      (ck-macro-transformer ()
+	      (em-syntax-rules ()
 		((m 'a) 10))))
 	  (m 1)))
 
@@ -80,226 +80,226 @@
 	10
 	(letrec-syntax
 	    ((m1
-	      (ck-macro-transformer ()
+	      (em-syntax-rules ()
 		((m1 'a) '(+ a 3))))
 	     (m2
-	      (ck-macro-transformer ()
+	      (em-syntax-rules ()
 		((m2 'a 'b) `(+ ,(m1 'a) ,(m1 'b))))))
-	  (ck-expression (m2 '1 '3))))
+	  (em (m2 '1 '3))))
 
       (test-equal "Quasiquotation in input element"
 	10
 	(letrec-syntax
 	    ((m1
-	      (ck-macro-transformer ()
+	      (em-syntax-rules ()
 		((m1 'a) '(+ a 3))))
 	     (m2
-	      (ck-macro-transformer ()
+	      (em-syntax-rules ()
 		((m2 'a) 'a))))
-	  (ck-expression (m2 `(+ 5 ,(m1 '2))))))
+	  (em (m2 `(+ 5 ,(m1 '2))))))
 
       (test-equal "Quasiquotation: vector"
 	#((a . 1) 2 3)
-	(ck-expression (ck-quote `#(,(ck-cons 'a '1) ,@(ck-list 2 3)))))
+	(em (em-quote `#(,(em-cons 'a '1) ,@(em-list 2 3)))))
 
       (test-equal "Pattern binding"
 	'(foo (foo))
 	(letrec-syntax
 	    ((m
-	      (ck-macro-transformer ()
+	      (em-syntax-rules ()
 		((m 'a)
-		 ((ck-make-list (ck-2) 'a) => '(b c))
-		 ((ck-list 'c) => 'd)
+		 ((em-make-list (em-2) 'a) => '(b c))
+		 ((em-list 'c) => 'd)
 		 '(a d)))))
-	  (ck-expression (ck-quote (m 'foo)))))
+	  (em (em-quote (m 'foo)))))
 
       (test-equal "Pattern binding with ellipsis"
 	'(foo bar (foo))
 	(letrec-syntax
 	    ((m
-	      (ck-macro-transformer ()
+	      (em-syntax-rules ()
 		((m 'a 'x ...)
-		 ((ck-make-list (ck-2) 'a) => '(b c))
-		 ((ck-list 'c) => 'd)
+		 ((em-make-list (em-2) 'a) => '(b c))
+		 ((em-list 'c) => 'd)
 		 '(a x ... d)))))
-	  (ck-expression (ck-quote (m 'foo 'bar)))))
+	  (em (em-quote (m 'foo 'bar)))))
 
       (test-group "General"
 
-	(test-equal "ck-cut: without ..."
+	(test-equal "em-cut: without ..."
 	  '(a . <>)
-	  (ck-expression (ck-quote (ck-apply (ck-cut 'ck-cons <> '<>) 'a '()))))
+	  (em (em-quote (em-apply (em-cut 'em-cons <> '<>) 'a '()))))
 
-	(test-equal "ck-cut: with ..."
+	(test-equal "em-cut: with ..."
 	  '(a b c d)
-	  (ck-expression (ck-quote (ck-apply (ck-cut 'ck-list <> 'b <> ...) 'a 'c 'd '()))))
+	  (em (em-quote (em-apply (em-cut 'em-list <> 'b <> ...) 'a 'c 'd '()))))
 
-	(test-equal "ck-cut: in operator position"
+	(test-equal "em-cut: in operator position"
 	  '(a . <>)
-	  (ck-expression (ck-quote ((ck-cut 'ck-cons <> '<>) 'a))))
+	  (em (em-quote ((em-cut 'em-cons <> '<>) 'a))))
 
-	(test-equal "ck-cute: without ..."
+	(test-equal "em-cute: without ..."
 	  '(a . <>)
-	  (ck-expression (ck-quote (ck-apply (ck-cute 'ck-cons <> '<>) 'a '()))))
+	  (em (em-quote (em-apply (em-cute 'em-cons <> '<>) 'a '()))))
 
-	(test-equal "ck-cute: with ..."
+	(test-equal "em-cute: with ..."
 	  '(a b c d)
-	  (ck-expression (ck-quote (ck-apply (ck-cute 'ck-list <> 'b <> ...) 'a 'c 'd '()))))
+	  (em (em-quote (em-apply (em-cute 'em-list <> 'b <> ...) 'a 'c 'd '()))))
 
-	(test-equal "ck-cute: in operator position"
+	(test-equal "em-cute: in operator position"
 	  '(a . <>)
-	  (ck-expression (ck-quote ((ck-cute 'ck-cons <> '<>) 'a))))
+	  (em (em-quote ((em-cute 'em-cons <> '<>) 'a))))
 
-	(test-equal "ck-constant"
+	(test-equal "em-constant"
 	  'foo
-	  (ck-expression (ck-quote ((ck-constant 'foo) 'a 'b 'c))))
+	  (em (em-quote ((em-constant 'foo) 'a 'b 'c))))
 
-	(test-equal "ck-quote"
+	(test-equal "em-quote"
 	  '(1 2 3)
-	  (ck-expression (ck-quote (ck-list 1 2 3))))
+	  (em (em-quote (em-list 1 2 3))))
 
-	(test-equal "ck-eval"
+	(test-equal "em-eval"
 	  '(1 2 3)
-	  (ck-expression (ck-eval '(ck-list 'list 1 2 3))))
+	  (em (em-eval '(em-list 'list 1 2 3))))
 	
-	(test-equal "ck-apply"
+	(test-equal "em-apply"
 	  '(1 2 3 4 5 6)	
-	  (ck-expression (ck-apply 'ck-list 'list 1 2 3 '(4 5 6))))
+	  (em (em-apply 'em-list 'list 1 2 3 '(4 5 6))))
 	
-	(test-equal "ck-call"
+	(test-equal "em-call"
 	  '(1 2 3)
-	  (ck-expression (ck-quote (ck-call 'ck-list '1 '2 '3))))
+	  (em (em-quote (em-call 'em-list '1 '2 '3))))
 
-	(test-assert "ck-gensym"
-	  (ck-expression (ck-not (ck-bound-identifier=? (ck-gensym) (ck-gensym)))))
+	(test-assert "em-gensym"
+	  (em (em-not (em-bound-identifier=? (em-gensym) (em-gensym)))))
 
-	(test-assert "ck-generate-temporaries"
-	  (ck-expression (ck-not (ck-apply 'ck-bound-identifier=? (ck-generate-temporaries (ck-2)))))))
+	(test-assert "em-generate-temporaries"
+	  (em (em-not (em-apply 'em-bound-identifier=? (em-generate-temporaries (em-2)))))))
       
       (test-group "Boolean logic"
 	
-	(test-equal "ck-if: true test"
+	(test-equal "em-if: true test"
 	  'true
-	  (ck-expression (ck-quote (ck-if '#t 'true 'false))))
+	  (em (em-quote (em-if '#t 'true 'false))))
 
-	(test-equal "ck-if: false test"
+	(test-equal "em-if: false test"
 	  'false
-	  (ck-expression (ck-quote (ck-if '#f 'true 'false))))
+	  (em (em-quote (em-if '#f 'true 'false))))
 
-	(test-equal "ck-not"
+	(test-equal "em-not"
 	  'false
-	  (ck-expression (ck-quote (ck-if (ck-not '#t) 'true 'false))))
+	  (em (em-quote (em-if (em-not '#t) 'true 'false))))
 
-	(test-equal "ck-or"
+	(test-equal "em-or"
 	  'a
-	  (ck-expression (ck-or '#f ''a (ck-error "fail"))))
+	  (em (em-or '#f ''a (em-error "fail"))))
 
-	(test-equal "ck-and"
+	(test-equal "em-and"
 	  '#f
-	  (ck-expression (ck-and ''a ''b '#f (ck-error "fail"))))
+	  (em (em-and ''a ''b '#f (em-error "fail"))))
 
-	(test-equal "ck-null?: true"
+	(test-equal "em-null?: true"
 	  'true
-	  (ck-expression (ck-quote (ck-if (ck-null? '()) 'true 'false))))
+	  (em (em-quote (em-if (em-null? '()) 'true 'false))))
 
-	(test-equal "ck-null?: false"
+	(test-equal "em-null?: false"
 	  'false
-	  (ck-expression (ck-quote (ck-if (ck-null? 'x) 'true 'false))))
+	  (em (em-quote (em-if (em-null? 'x) 'true 'false))))
 
-	(test-equal "ck-pair?: true"
+	(test-equal "em-pair?: true"
 	  'true
-	  (ck-expression (ck-quote (ck-if (ck-pair? '(a . b)) 'true 'false))))
+	  (em (em-quote (em-if (em-pair? '(a . b)) 'true 'false))))
 
-	(test-equal "ck-pair?: false"
+	(test-equal "em-pair?: false"
 	  'false
-	  (ck-expression (ck-quote (ck-if (ck-pair? '()) 'true 'false))))
+	  (em (em-quote (em-if (em-pair? '()) 'true 'false))))
 
-	(test-equal "ck-list?: true"
+	(test-equal "em-list?: true"
 	  'true
-	  (ck-expression (ck-quote (ck-if (ck-list? '(a b)) 'true 'false))))
+	  (em (em-quote (em-if (em-list? '(a b)) 'true 'false))))
 
-	(test-equal "ck-list?: false"
+	(test-equal "em-list?: false"
 	  'false
-	  (ck-expression (ck-quote (ck-if (ck-list? '(a . b)) 'true 'false))))
+	  (em (em-quote (em-if (em-list? '(a . b)) 'true 'false))))
 	
-	(test-equal "ck-boolean?: true"
+	(test-equal "em-boolean?: true"
 	  'true
-	  (ck-expression (ck-quote (ck-if (ck-boolean? '#f) 'true 'false))))
+	  (em (em-quote (em-if (em-boolean? '#f) 'true 'false))))
 
-	(test-equal "ck-boolean?: false"
+	(test-equal "em-boolean?: false"
 	  'false
-	  (ck-expression (ck-quote (ck-if (ck-boolean? '(a . b)) 'true 'false))))
+	  (em (em-quote (em-if (em-boolean? '(a . b)) 'true 'false))))
 	
-	(test-equal "ck-vector?: true"
+	(test-equal "em-vector?: true"
 	  'true
-	  (ck-expression (ck-quote (ck-if (ck-vector? '#(a b)) 'true 'false))))
+	  (em (em-quote (em-if (em-vector? '#(a b)) 'true 'false))))
 	
-	(test-equal "ck-vector?: false"
+	(test-equal "em-vector?: false"
 	  'false
-	  (ck-expression (ck-quote (ck-if (ck-vector? '(a . b)) 'true 'false))))
+	  (em (em-quote (em-if (em-vector? '(a . b)) 'true 'false))))
 
-	(test-equal "ck-symbol?: true"
+	(test-equal "em-symbol?: true"
 	  'true
-	  (ck-expression (ck-quote (ck-if (ck-symbol? 'a) 'true 'false))))
+	  (em (em-quote (em-if (em-symbol? 'a) 'true 'false))))
 
-	(test-equal "ck-symbol?: false"
+	(test-equal "em-symbol?: false"
 	  'false
-	  (ck-expression (ck-quote (ck-if (ck-symbol? '(a . b)) 'true 'false))))
+	  (em (em-quote (em-if (em-symbol? '(a . b)) 'true 'false))))
 
-	(test-equal "ck-bound-identifier=?: true"
+	(test-equal "em-bound-identifier=?: true"
 	  'true
 	  (letrec-syntax
 	      ((m
 		(syntax-rules ()
 		  ((m a b)
-		   (ck-expression (ck-quote (ck-if (ck-bound-identifier=? 'a 'b) 'true 'false)))))))
+		   (em (em-quote (em-if (em-bound-identifier=? 'a 'b) 'true 'false)))))))
 	    (m c c)))
 
-	(test-equal "ck-bound-identifier=?: false"
+	(test-equal "em-bound-identifier=?: false"
 	  'false
 	  (letrec-syntax
 	      ((m
 		(syntax-rules ()
 		  ((m a b)
-		   (ck-expression (ck-quote (ck-if (ck-bound-identifier=? 'a 'b) 'true 'false)))))))
+		   (em (em-quote (em-if (em-bound-identifier=? 'a 'b) 'true 'false)))))))
 	    (m c d)))
 
-	(test-equal "ck-free-identifier=?: true"
+	(test-equal "em-free-identifier=?: true"
 	  'true
 	  (letrec-syntax
 	      ((m
 		(syntax-rules ()
 		  ((m a)
-		   (ck-expression (ck-quote (ck-if (ck-free-identifier=? 'a 'm) 'true 'false)))))))
+		   (em (em-quote (em-if (em-free-identifier=? 'a 'm) 'true 'false)))))))
 	    (m m)))
 
-	(test-equal "ck-free-identifier=?: false"
+	(test-equal "em-free-identifier=?: false"
 	  'false
 	  (letrec-syntax
 	      ((m
 		(syntax-rules ()
 		  ((m a)
-		   (ck-expression (ck-quote (ck-if (ck-free-identifier=? 'a 'm) 'true 'false)))))))
+		   (em (em-quote (em-if (em-free-identifier=? 'a 'm) 'true 'false)))))))
 	    (m c)))
 	
-	(test-equal "ck-equal?: numbers/true"
+	(test-equal "em-equal?: numbers/true"
 	  'true
-	  (ck-expression (ck-quote (ck-if (ck-equal? '10 '10) 'true 'false))))
+	  (em (em-quote (em-if (em-equal? '10 '10) 'true 'false))))
 
-	(test-equal "ck-equal?: numbers/false"
+	(test-equal "em-equal?: numbers/false"
 	  'false
-	  (ck-expression (ck-quote (ck-if (ck-equal? '10 "foo") 'true 'false))))
+	  (em (em-quote (em-if (em-equal? '10 "foo") 'true 'false))))
 
-	(test-equal "ck-equal?: recursive/true"
+	(test-equal "em-equal?: recursive/true"
 	  'true
-	  (ck-expression (ck-quote (ck-if (ck-equal? '(a . #(1 2 ("x" "y")))
+	  (em (em-quote (em-if (em-equal? '(a . #(1 2 ("x" "y")))
 						     '(a . #(1 2 ("x" "y"))))
 					  'true
 					  'false))))
 	
-	(test-equal "ck-equal?: recursive/false"
+	(test-equal "em-equal?: recursive/false"
 	  'false
-	  (ck-expression (ck-quote (ck-if (ck-equal? '(a . #(1 2 ("x" y)))
+	  (em (em-quote (em-if (em-equal? '(a . #(1 2 ("x" y)))
 						     '(a . #(1 2 ("x" "y"))))
 					  'true
 					  'false)))))
@@ -307,400 +307,400 @@
       (test-group "List processing"
 
 	(test-group "Constructors"        
-	  (test-equal "ck-cons"
+	  (test-equal "em-cons"
 	    10
 	    (let ()
-	      (ck-cons 'define '(x 10))
+	      (em-cons 'define '(x 10))
 	      x))
 
-	  (test-equal "ck-cons*"
+	  (test-equal "em-cons*"
 	    '(a b . c)
-	    (ck-expression (ck-quote (ck-cons* 'a 'b 'c))))
+	    (em (em-quote (em-cons* 'a 'b 'c))))
 
-	  (test-equal "ck-list"
+	  (test-equal "em-list"
 	    10
 	    (let ()
-	      (ck-list 'define 'x '10)
+	      (em-list 'define 'x '10)
 	      x))
 
-	  (test-equal "ck-make-list"
+	  (test-equal "em-make-list"
 	    '(a a a a a)
-	    (ck-expression (ck-quote (ck-make-list (ck-5) 'a)))))
+	    (em (em-quote (em-make-list (em-5) 'a)))))
 
 	(test-group "Selectors"
 
-	  (test-equal "ck-car"
+	  (test-equal "em-car"
 	    'car
-	    (ck-expression (ck-car '('car . 'cdr))))
+	    (em (em-car '('car . 'cdr))))
 	  
-	  (test-equal "ck-car"
+	  (test-equal "em-car"
 	    'cdr
-	    (ck-expression (ck-cdr '('car . 'cdr))))
+	    (em (em-cdr '('car . 'cdr))))
 	  
-	  (test-equal "ck-caar"
+	  (test-equal "em-caar"
 	    'a
-	    (ck-expression (ck-quote (ck-caar '((a . b) . c)))))
+	    (em (em-quote (em-caar '((a . b) . c)))))
 
-	  (test-equal "ck-cadr"
+	  (test-equal "em-cadr"
 	    'c
-	    (ck-expression (ck-quote (ck-cadr '((a . b) . (c . d))))))
+	    (em (em-quote (em-cadr '((a . b) . (c . d))))))
 
-	  (test-equal "ck-cdar"
+	  (test-equal "em-cdar"
 	    'b
-	    (ck-expression (ck-quote (ck-cdar '((a . b) . c)))))
+	    (em (em-quote (em-cdar '((a . b) . c)))))
 
-	  (test-equal "ck-cddr"
+	  (test-equal "em-cddr"
 	    'd
-	    (ck-expression (ck-quote (ck-cddr '((a . b) . (c . d))))))
+	    (em (em-quote (em-cddr '((a . b) . (c . d))))))
 
-	  (test-equal "ck-first"
+	  (test-equal "em-first"
 	    1
-	    (ck-expression (ck-quote (ck-first '(1 2 3 4 5 6 7 8 9 10)))))
+	    (em (em-quote (em-first '(1 2 3 4 5 6 7 8 9 10)))))
 
-	  (test-equal "ck-second"
+	  (test-equal "em-second"
 	    2
-	    (ck-expression (ck-quote (ck-second '(1 2 3 4 5 6 7 8 9 10)))))
+	    (em (em-quote (em-second '(1 2 3 4 5 6 7 8 9 10)))))
 
-	  (test-equal "ck-third"
+	  (test-equal "em-third"
 	    3
-	    (ck-expression (ck-quote (ck-third '(1 2 3 4 5 6 7 8 9 10)))))
+	    (em (em-quote (em-third '(1 2 3 4 5 6 7 8 9 10)))))
 
-	  (test-equal "ck-fourth"
+	  (test-equal "em-fourth"
 	    4
-	    (ck-expression (ck-quote (ck-fourth '(1 2 3 4 5 6 7 8 9 10)))))
+	    (em (em-quote (em-fourth '(1 2 3 4 5 6 7 8 9 10)))))
 
-	  (test-equal "ck-fifth"
+	  (test-equal "em-fifth"
 	    5
-	    (ck-expression (ck-quote (ck-fifth '(1 2 3 4 5 6 7 8 9 10)))))
+	    (em (em-quote (em-fifth '(1 2 3 4 5 6 7 8 9 10)))))
 
-	  (test-equal "ck-sixth"
+	  (test-equal "em-sixth"
 	    6
-	    (ck-expression (ck-quote (ck-sixth '(1 2 3 4 5 6 7 8 9 10)))))
+	    (em (em-quote (em-sixth '(1 2 3 4 5 6 7 8 9 10)))))
 
-	  (test-equal "ck-seventh"
+	  (test-equal "em-seventh"
 	    7
-	    (ck-expression (ck-quote (ck-seventh '(1 2 3 4 5 6 7 8 9 10)))))
+	    (em (em-quote (em-seventh '(1 2 3 4 5 6 7 8 9 10)))))
 
-	  (test-equal "ck-eighth"
+	  (test-equal "em-eighth"
 	    8
-	    (ck-expression (ck-quote (ck-eighth '(1 2 3 4 5 6 7 8 9 10)))))
+	    (em (em-quote (em-eighth '(1 2 3 4 5 6 7 8 9 10)))))
 
-	  (test-equal "ck-ninth"
+	  (test-equal "em-ninth"
 	    9
-	    (ck-expression (ck-quote (ck-ninth '(1 2 3 4 5 6 7 8 9 10)))))
+	    (em (em-quote (em-ninth '(1 2 3 4 5 6 7 8 9 10)))))
 
-	  (test-equal "ck-tenth"
+	  (test-equal "em-tenth"
 	    10
-	    (ck-expression (ck-quote (ck-tenth '(1 2 3 4 5 6 7 8 9 10)))))
+	    (em (em-quote (em-tenth '(1 2 3 4 5 6 7 8 9 10)))))
 	  
-	  (test-equal "ck-list-tail"
+	  (test-equal "em-list-tail"
 	    '(3 4 5)
-	    (ck-expression (ck-quote (ck-list-tail '(1 2 3 4 5) (ck-2)))))
+	    (em (em-quote (em-list-tail '(1 2 3 4 5) (em-2)))))
 
-	  (test-equal "ck-list-ref"
+	  (test-equal "em-list-ref"
 	    '4
-	    (ck-expression (ck-quote (ck-list-ref '(1 2 3 4 5) (ck-3)))))
+	    (em (em-quote (em-list-ref '(1 2 3 4 5) (em-3)))))
 
-	  (test-equal "ck-take"
+	  (test-equal "em-take"
 	    '(1 2 3)
-	    (ck-expression (ck-quote (ck-take '(1 2 3) (ck-3)))))
+	    (em (em-quote (em-take '(1 2 3) (em-3)))))
 
-	  (test-equal "ck-take-right"
+	  (test-equal "em-take-right"
 	    '(2 3 . d)
-	    (ck-expression (ck-quote (ck-take-right '(0 1 2 3 . d) (ck-2)))))
+	    (em (em-quote (em-take-right '(0 1 2 3 . d) (em-2)))))
 
-	  (test-equal "ck-drop-right"
+	  (test-equal "em-drop-right"
 	    '(0 1)
-	    (ck-expression (ck-quote (ck-drop-right '(0 1 2 3 . d) (ck-2)))))
+	    (em (em-quote (em-drop-right '(0 1 2 3 . d) (em-2)))))
 
-	  (test-equal "ck-last"
+	  (test-equal "em-last"
 	    'c
-	    (ck-expression (ck-quote (ck-last '(a b c)))))
+	    (em (em-quote (em-last '(a b c)))))
 
-	  (test-equal "ck-last-pair"
+	  (test-equal "em-last-pair"
 	    '(c)
-	    (ck-expression (ck-quote (ck-last-pair '(a b c))))))
+	    (em (em-quote (em-last-pair '(a b c))))))
 
 	(test-group "Miscellaneous"
-	  (test-equal "ck-append"
+	  (test-equal "em-append"
 	    10
 	    (let ()
-	      (ck-append '(define) '(x) '(10))
+	      (em-append '(define) '(x) '(10))
 	      x))
 	  
-	  (test-equal "ck-reverse"
+	  (test-equal "em-reverse"
 	    '(5 4 3 2 1)
-	    (ck-expression (ck-quote (ck-reverse '(1 2 3 4 5))))))
+	    (em (em-quote (em-reverse '(1 2 3 4 5))))))
 	
 	(test-group "Folding, unfolding and mapping"
 	  
-	  (test-equal "ck-fold"
+	  (test-equal "em-fold"
 	    '(* b 2 (* a 1 ()))
-	    (ck-expression (ck-quote (ck-fold (ck-cute 'ck-list '* <> ...)
+	    (em (em-quote (em-fold (em-cute 'em-list '* <> ...)
 					      '()
 					      '(a b c)
 					      '(1 2)))))
 	  
-	  (test-equal "ck-fold-right"
+	  (test-equal "em-fold-right"
 	    '(* a 1 (* b 2 ()))
-	    (ck-expression (ck-quote (ck-fold-right (ck-cute 'ck-list '* <> ...)
+	    (em (em-quote (em-fold-right (em-cute 'em-list '* <> ...)
 						    '()
 						    '(a b c)
 						    '(1 2)))))
 	  
-	  (test-equal "ck-unfold"
+	  (test-equal "em-unfold"
 	    '(1 2 3)
-	    (ck-expression (ck-quote (ck-unfold 'ck-null? 'ck-car 'ck-cdr '(1 2 3)))))
+	    (em (em-quote (em-unfold 'em-null? 'em-car 'em-cdr '(1 2 3)))))
 	  
-	  (test-equal "ck-unfold-right"
+	  (test-equal "em-unfold-right"
 	    '(3 2 1)
-	    (ck-expression (ck-quote (ck-unfold-right 'ck-null? 'ck-car 'ck-cdr '(1 2 3)))))
+	    (em (em-quote (em-unfold-right 'em-null? 'em-car 'em-cdr '(1 2 3)))))
 
-	  (test-equal "ck-map"
+	  (test-equal "em-map"
 	    '((* . 1) (* . 2) (* . 3))
-	    (ck-expression (ck-quote (ck-map (ck-cut 'ck-cons '* <>) '(1 2 3)))))
+	    (em (em-quote (em-map (em-cut 'em-cons '* <>) '(1 2 3)))))
 
-	  (test-equal "ck-append-map"
+	  (test-equal "em-append-map"
 	    '(1 a 2 b 3 c)
-	    (ck-expression (ck-quote (ck-append-map 'ck-list '(1 2 3) '(a b c))))))
+	    (em (em-quote (em-append-map 'em-list '(1 2 3) '(a b c))))))
 
 	(test-group "Filtering"
 
-	  (test-equal "ck-filter"
+	  (test-equal "em-filter"
 	    '(foo foo)
-	    (ck-expression (ck-quote (ck-filter (ck-cut 'ck-equal? 'foo <>) '(foo bar baz foo)))))
+	    (em (em-quote (em-filter (em-cut 'em-equal? 'foo <>) '(foo bar baz foo)))))
 
-	  (test-equal "ck-remove"
+	  (test-equal "em-remove"
 	    '(bar baz)
-	    (ck-expression (ck-quote (ck-remove (ck-cut 'ck-equal? 'foo <>) '(foo bar baz foo))))))
+	    (em (em-quote (em-remove (em-cut 'em-equal? 'foo <>) '(foo bar baz foo))))))
 
 	(test-group "Searching"
 	  (define-syntax pred
-	    (ck-macro-transformer ()
-	      ((pred 'x 'y) (ck-equal? 'x (ck-car 'y)))))
+	    (em-syntax-rules ()
+	      ((pred 'x 'y) (em-equal? 'x (em-car 'y)))))
 
-	  (test-equal "ck-find"
+	  (test-equal "em-find"
 	    '(2 . b)
-	    (ck-expression (ck-quote (ck-find (ck-cut 'pred 2 <>) '((1 . a) (2 . b) (3 . c))))))
+	    (em (em-quote (em-find (em-cut 'pred 2 <>) '((1 . a) (2 . b) (3 . c))))))
 
-	  (test-equal "ck-find-tail"
+	  (test-equal "em-find-tail"
 	    '((2 . b) (3 . c))
-	    (ck-expression (ck-quote (ck-find-tail (ck-cut 'pred 2 <>) '((1 . a) (2 . b) (3 . c))))))
+	    (em (em-quote (em-find-tail (em-cut 'pred 2 <>) '((1 . a) (2 . b) (3 . c))))))
 
-	  (test-equal "ck-take-while"
+	  (test-equal "em-take-while"
 	    '()
-	    (ck-expression (ck-quote (ck-take-while (ck-cut 'pred 2 <>) '((1 . a) (2 . b) (3 . c))))))
+	    (em (em-quote (em-take-while (em-cut 'pred 2 <>) '((1 . a) (2 . b) (3 . c))))))
 
-	  (test-equal "ck-drop-while"
+	  (test-equal "em-drop-while"
 	    '((1 . a) (2 . b) (3 . c))
-	    (ck-expression (ck-quote (ck-drop-while (ck-cut 'pred 2 <>) '((1 . a) (2 . b) (3 . c))))))
+	    (em (em-quote (em-drop-while (em-cut 'pred 2 <>) '((1 . a) (2 . b) (3 . c))))))
 
-	  (test-equal "ck-any"
+	  (test-equal "em-any"
 	    '#t
-	    (ck-expression (ck-quote (ck-any (ck-cut 'pred 2 <>) '((1 . a) (2 . b) (3 . c))))))
+	    (em (em-quote (em-any (em-cut 'pred 2 <>) '((1 . a) (2 . b) (3 . c))))))
 
-	  (test-equal "ck-every"
+	  (test-equal "em-every"
 	    '#f
-	     (ck-expression (ck-quote (ck-every (ck-cut 'pred 2 <>) '((1 . a) (2 . b) (3 . c))))))
+	     (em (em-quote (em-every (em-cut 'pred 2 <>) '((1 . a) (2 . b) (3 . c))))))
 
-	  (test-equal "ck-member"
+	  (test-equal "em-member"
 	    '(2 3)
-	    (ck-expression (ck-quote (ck-member '2 '(1 2 3) 'ck-equal?)))))
+	    (em (em-quote (em-member '2 '(1 2 3) 'em-equal?)))))
 
 	(test-group "Association lists"
 
-	  (test-equal "ck-assoc"
+	  (test-equal "em-assoc"
 	    '(2 . b)
-	    (ck-expression (ck-quote (ck-assoc '2 '((1 . a) (2 . b) (3 . c))))))
+	    (em (em-quote (em-assoc '2 '((1 . a) (2 . b) (3 . c))))))
 
-	  (test-equal "ck-assoc"
+	  (test-equal "em-assoc"
 	    '((1 . a) (3 . c))
-	    (ck-expression (ck-quote (ck-alist-delete '2 '((1 . a) (2 . b) (3 . c)))))))
+	    (em (em-quote (em-alist-delete '2 '((1 . a) (2 . b) (3 . c)))))))
 
 	(test-group "Set operations"
 
-	  (test-assert "ck-set<=: true"
-	    (ck-expression (ck-set<= 'ck-equal? '(1 2) '(1 2 3))))
+	  (test-assert "em-set<=: true"
+	    (em (em-set<= 'em-equal? '(1 2) '(1 2 3))))
 
-	  (test-assert "ck-set<=: false"
-	    (ck-expression (ck-not (ck-set<= 'ck-equal? '(3 1 2 3) '(1 2)))))
+	  (test-assert "em-set<=: false"
+	    (em (em-not (em-set<= 'em-equal? '(3 1 2 3) '(1 2)))))
 	  
-	  (test-assert "ck-set-adjoin"
-	    (ck-expression (ck-= (ck-set-adjoin 'ck-equal? '(1 2 3) '2 '4) (ck-4))))
+	  (test-assert "em-set-adjoin"
+	    (em (em= (em-set-adjoin 'em-equal? '(1 2 3) '2 '4) (em-4))))
 
-	  (test-assert "ck-set-union"
-	    (ck-expression (ck-= (ck-set-union 'ck-equal? '(1 2 3) '(3 4 5)) (ck-5))))
+	  (test-assert "em-set-union"
+	    (em (em= (em-set-union 'em-equal? '(1 2 3) '(3 4 5)) (em-5))))
 
-	  (test-assert "ck-set-intersection"
-	    (ck-expression (ck-= (ck-set-intersection 'ck-equal? '(1 2 3) '(3 4 5)) (ck-1))))
+	  (test-assert "em-set-intersection"
+	    (em (em= (em-set-intersection 'em-equal? '(1 2 3) '(3 4 5)) (em-1))))
 
-	  (test-assert "ck-set-difference"
-	    (ck-expression (ck-= (ck-set-difference 'ck-equal? '(1 2 3) '(3 4 5)) (ck-2))))
+	  (test-assert "em-set-difference"
+	    (em (em= (em-set-difference 'em-equal? '(1 2 3) '(3 4 5)) (em-2))))
 
-	  (test-assert "ck-set-xor"
-	    (ck-expression (ck-= (ck-set-xor 'ck-equal? '(1 2 3) '(3 4 5)) (ck-4))))))
+	  (test-assert "em-set-xor"
+	    (em (em= (em-set-xor 'em-equal? '(1 2 3) '(3 4 5)) (em-4))))))
 
       ;; Vector processing
       (test-group "Vector processing"
 		  
-		  (test-equal "ck-vector"
+		  (test-equal "em-vector"
 		    #(10 20 30)
-		    (ck-expression (ck-quote (ck-vector 10 20 30))))
+		    (em (em-quote (em-vector 10 20 30))))
 
-		  (test-equal "ck-list->vector"
+		  (test-equal "em-list->vector"
 		    #(10 20 30)
-		    (ck-expression (ck-quote (ck-list->vector '(10 20 30)))))
+		    (em (em-quote (em-list->vector '(10 20 30)))))
 		  
-		  (test-equal "ck-vector->list"
+		  (test-equal "em-vector->list"
 		    '(10 20 30)
-		    (ck-expression (ck-quote (ck-vector->list #(10 20 30)))))
+		    (em (em-quote (em-vector->list #(10 20 30)))))
 
-		  (test-equal "ck-vector-map"
+		  (test-equal "em-vector-map"
 		    '#((1 . a) (2 . b) (3 . c))
-		    (ck-expression (ck-quote (ck-vector-map 'ck-cons '#(1 2 3) '#(a b c d)))))
+		    (em (em-quote (em-vector-map 'em-cons '#(1 2 3) '#(a b c d)))))
 		  
-		  (test-equal "ck-vector-ref"
+		  (test-equal "em-vector-ref"
 		    20
-		    (ck-expression (ck-quote (ck-vector-ref #(10 20 30) (ck-1))))))
+		    (em (em-quote (em-vector-ref #(10 20 30) (em-1))))))
 	
       (test-group "Combinatorics"
 
-		  (test-equal "ck-0"
+		  (test-equal "em-0"
 		    #t
-		    (ck-expression (ck-= '() (ck-0))))
+		    (em (em= '() (em-0))))
 
-		  (test-equal "ck-1"
+		  (test-equal "em-1"
 		    #t
-		    (ck-expression (ck-= '(0) (ck-1))))
+		    (em (em= '(0) (em-1))))
 
-		  (test-equal "ck-2"
+		  (test-equal "em-2"
 		    #t
-		    (ck-expression (ck-= '(0 1) (ck-2))))
+		    (em (em= '(0 1) (em-2))))
 
-		  (test-equal "ck-3"
+		  (test-equal "em-3"
 		    #t
-		    (ck-expression (ck-= '(0 1 2) (ck-3))))
+		    (em (em= '(0 1 2) (em-3))))
 
-		  (test-equal "ck-4"
+		  (test-equal "em-4"
 		    #t
-		    (ck-expression (ck-= '(0 1 2 3) (ck-4))))
+		    (em (em= '(0 1 2 3) (em-4))))
 
-		  (test-equal "ck-5"
+		  (test-equal "em-5"
 		    #t
-		    (ck-expression (ck-= '(0 1 2 3 4) (ck-5))))
+		    (em (em= '(0 1 2 3 4) (em-5))))
 
-		  (test-equal "ck-6"
+		  (test-equal "em-6"
 		    #t
-		    (ck-expression (ck-= '(0 1 2 3 4 5) (ck-6))))
+		    (em (em= '(0 1 2 3 4 5) (em-6))))
 
-		  (test-equal "ck-7"
+		  (test-equal "em-7"
 		    #t
-		    (ck-expression (ck-= '(0 1 2 3 4 5 6) (ck-7))))
+		    (em (em= '(0 1 2 3 4 5 6) (em-7))))
 
-		  (test-equal "ck-8"
+		  (test-equal "em-8"
 		    #t
-		    (ck-expression (ck-= '(0 1 2 3 4 5 6 7) (ck-8))))
+		    (em (em= '(0 1 2 3 4 5 6 7) (em-8))))
 
-		  (test-equal "ck-9"
+		  (test-equal "em-9"
 		    #t
-		    (ck-expression (ck-= '(0 1 2 3 4 5 6 7 8) (ck-9))))
+		    (em (em= '(0 1 2 3 4 5 6 7 8) (em-9))))
 		  
-		  (test-equal "ck-10"
+		  (test-equal "em-10"
 		    #t
-		    (ck-expression (ck-= '(0 1 2 3 4 5 6 7 8 9) (ck-10))))
+		    (em (em= '(0 1 2 3 4 5 6 7 8 9) (em-10))))
 
-		  (test-assert "ck-=: true"
-		    (ck-expression (ck-quote (ck-= '(1 2 3) '(a b c) '(foo bar baz)))))
+		  (test-assert "em=: true"
+		    (em (em-quote (em= '(1 2 3) '(a b c) '(foo bar baz)))))
 		  
-		  (test-assert "ck-=: false"
-		    (ck-expression (ck-quote (ck-not (ck-= '(1 2 3) '(a b c d) '(foo bar baz))))))
+		  (test-assert "em=: false"
+		    (em (em-quote (em-not (em= '(1 2 3) '(a b c d) '(foo bar baz))))))
 
-		  (test-assert "ck-<: true"
-		    (ck-expression (ck-quote (ck-< '(1) '(a b) '(foo bar baz)))))
+		  (test-assert "em<: true"
+		    (em (em-quote (em< '(1) '(a b) '(foo bar baz)))))
 		  
-		  (test-assert "ck-<: false"
-		    (ck-expression (ck-quote (ck-not (ck-< '(1 2) '(a b c) '(foo bar baz))))))
+		  (test-assert "em<: false"
+		    (em (em-quote (em-not (em< '(1 2) '(a b c) '(foo bar baz))))))
 
-		  (test-assert "ck-<=: true"
-		    (ck-expression (ck-quote (ck-<= '(1 2) '(a b c) '(foo bar baz)))))
+		  (test-assert "em<=: true"
+		    (em (em-quote (em<= '(1 2) '(a b c) '(foo bar baz)))))
 		  
-		  (test-assert "ck-<=: false"
-		    (ck-expression (ck-quote (ck-not (ck-<= '(1 2 3) '(a b c d) '(foo bar baz))))))
+		  (test-assert "em<=: false"
+		    (em (em-quote (em-not (em<= '(1 2 3) '(a b c d) '(foo bar baz))))))
 
-		  (test-assert "ck->: true"
-		    (ck-expression (ck-quote (ck-> '(1 2 3 4 5) '(a b c d) '(foo bar baz)))))
+		  (test-assert "em>: true"
+		    (em (em-quote (em> '(1 2 3 4 5) '(a b c d) '(foo bar baz)))))
 		  
-		  (test-assert "ck->: false"
-		    (ck-expression (ck-quote (ck-not (ck-> '(1 2 3) '(a b c d) '(foo bar baz))))))
+		  (test-assert "em>: false"
+		    (em (em-quote (em-not (em> '(1 2 3) '(a b c d) '(foo bar baz))))))
 
-		  (test-assert "ck->=: true"
-		    (ck-expression (ck-quote (ck->= '(1 2 3 4) '(a b c d) '(foo bar baz)))))
+		  (test-assert "em>=: true"
+		    (em (em-quote (em>= '(1 2 3 4) '(a b c d) '(foo bar baz)))))
 		  
-		  (test-assert "ck->=: false"
-		    (ck-expression (ck-quote (ck-not (ck->= '(1 2 3) '(a b c d) '(foo bar baz))))))
+		  (test-assert "em>=: false"
+		    (em (em-quote (em-not (em>= '(1 2 3) '(a b c d) '(foo bar baz))))))
 
-		  (test-assert "ck-zero?: true"
-		    (ck-expression (ck-quote (ck-zero? (ck-0)))))
+		  (test-assert "em-zero?: true"
+		    (em (em-quote (em-zero? (em-0)))))
 
-		  (test-assert "ck-zero?: false"
-		    (ck-expression (ck-quote (ck-not (ck-zero? (ck-1))))))
+		  (test-assert "em-zero?: false"
+		    (em (em-quote (em-not (em-zero? (em-1))))))
 		  
-		  (test-assert "ck-even?: true"
-		    (ck-expression (ck-quote (ck-even? (ck-4)))))
+		  (test-assert "em-even?: true"
+		    (em (em-quote (em-even? (em-4)))))
 		  
-		  (test-assert "ck-even?: false"
-		    (ck-expression (ck-quote (ck-not (ck-even? (ck-3))))))
+		  (test-assert "em-even?: false"
+		    (em (em-quote (em-not (em-even? (em-3))))))
 		  
-		  (test-assert "ck-odd?: true"
-		    (ck-expression (ck-quote (ck-odd? (ck-1)))))
+		  (test-assert "em-odd?: true"
+		    (em (em-quote (em-odd? (em-1)))))
 		  
-		  (test-assert "ck-odd?: false"
-		    (ck-expression (ck-quote (ck-not (ck-odd? (ck-2))))))
+		  (test-assert "em-odd?: false"
+		    (em (em-quote (em-not (em-odd? (em-2))))))
 
-		  (test-equal "ck-+"
+		  (test-equal "em+"
 		    '(1 2 3 4 5 6 7 8)
-		    (ck-expression (ck-quote (ck-+ '(1 2 3) '(4 5 6) '(7 8)))))
+		    (em (em-quote (em+ '(1 2 3) '(4 5 6) '(7 8)))))
 		  
-		  (test-equal "ck--"
+		  (test-equal "em-"
 		    '(1 2 3)
-		    (ck-expression (ck-quote (ck-- '(1 2 3 4 5 6 7 8) (ck-2) (ck-3)))))
+		    (em (em-quote (em- '(1 2 3 4 5 6 7 8) (em-2) (em-3)))))
 
-		  (test-equal "ck-*"
+		  (test-equal "em*"
 		    '((1 a foo)
 		      (1 a bar)
 		      (2 a foo)
 		      (2 a bar))
-		    (ck-expression (ck-quote (ck-* '(1 2) '(a) '(foo bar)))))
+		    (em (em-quote (em* '(1 2) '(a) '(foo bar)))))
 
-		  (test-equal "ck-quotient"
+		  (test-equal "em-quotient"
 		    '(1 3)
-		    (ck-expression (ck-quote (ck-quotient '(1 2 3 4 5) (ck-2)))))
+		    (em (em-quote (em-quotient '(1 2 3 4 5) (em-2)))))
 
-		  (test-equal "ck-remainder"
+		  (test-equal "em-remainder"
 		    '(5)
-		    (ck-expression (ck-quote (ck-remainder '(1 2 3 4 5) (ck-2)))))
+		    (em (em-quote (em-remainder '(1 2 3 4 5) (em-2)))))
 
-		  (test-equal "ck-binom"
+		  (test-equal "em-binom"
 		    '((1 2)
 		      (1 3)
 		      (2 3))
-		    (ck-expression (ck-quote (ck-binom '(1 2 3) (ck-2)))))
+		    (em (em-quote (em-binom '(1 2 3) (em-2)))))
 		  
-		  (test-equal "ck-fact"
+		  (test-equal "em-fact"
 		    '((1 2 3)
 		      (1 3 2)
 		      (2 1 3)
 		      (2 3 1)
 		      (3 1 2)
 		      (3 2 1))
-		    (ck-expression (ck-quote (ck-fact '(1 2 3))))))
+		    (em (em-quote (em-fact '(1 2 3))))))
 
       (test-group "Example from specification"
 
 		  (define-syntax simple-match
-		    (ck-macro-transformer ()
+		    (em-syntax-rules ()
 		      ((simple-match expr (pattern . body) ...)
-		       (ck-expression
+		       (em
 			`(call-with-current-continuation
 			  (lambda (return)
 			    (let ((e expr))
@@ -711,7 +711,7 @@
 				  (error "does not match" expr)))))))))
 
 		  (define-syntax %compile-pattern
-		    (ck-macro-transformer ()
+		    (em-syntax-rules ()
 		      ((%compile-pattern '() 'e)
 		       '(((null? e))))
 		      ((%compile-pattern '(pattern1 pattern2 ...) 'e)
@@ -721,7 +721,7 @@
 			 ,@(%compile-pattern 'pattern1 'e1)
 			 ,@(%compile-pattern '(pattern2 ...) 'e2)))
 		      ((%compile-pattern 'x 'e)
-		       (ck-if (ck-symbol? 'x)
+		       (em-if (em-symbol? 'x)
 			      '((x e))
 			      '(((equal? x e)))))))
 

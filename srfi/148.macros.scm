@@ -23,808 +23,806 @@
 
 ;; General
 
-(define-syntax ck-constant
-  (ck-macro-transformer ::: ()
-    ((ck-constant 'const)
-     (ck-cut 'ck-constant-aux 'const <> ...))))
+(define-syntax em-constant
+  (em-syntax-rules ::: ()
+    ((em-constant 'const)
+     (em-cut 'em-constant-aux 'const <> ...))))
 
-(define-syntax ck-constant-aux
-  (ck-macro-transformer ()
-    ((ck-constant-aux 'const 'arg ...)
+(define-syntax em-constant-aux
+  (em-syntax-rules ()
+    ((em-constant-aux 'const 'arg ...)
      'const)))
 
-(define-syntax ck-append
-  (ck-macro-transformer ()
-    ((ck-append) ''())
-    ((ck-append 'l) 'l)
-    ((ck-append 'm ... '(a ...) 'l) (ck-append 'm ... '(a ... . l)))))
+(define-syntax em-append
+  (em-syntax-rules ()
+    ((em-append) ''())
+    ((em-append 'l) 'l)
+    ((em-append 'm ... '(a ...) 'l) (em-append 'm ... '(a ... . l)))))
 
-(define-syntax ck-list
-  (ck-macro-transformer ()
-    ((ck-list 'a ...) '(a ...))))
+(define-syntax em-list
+  (em-syntax-rules ()
+    ((em-list 'a ...) '(a ...))))
 
-(define-syntax ck-cons
-  (ck-macro-transformer ()
-    ((ck-cons 'h 't) '(h . t))))
+(define-syntax em-cons
+  (em-syntax-rules ()
+    ((em-cons 'h 't) '(h . t))))
 
-(define-syntax ck-cons*
-  (ck-macro-transformer ()
-    ((ck-cons* 'e ... 't) '(e ... . t))))
+(define-syntax em-cons*
+  (em-syntax-rules ()
+    ((em-cons* 'e ... 't) '(e ... . t))))
 
-(define-syntax ck-car
-  (ck-macro-transformer ()
-    ((ck-car '(h . t)) 'h)))
+(define-syntax em-car
+  (em-syntax-rules ()
+    ((em-car '(h . t)) 'h)))
 
-(define-syntax ck-cdr
-  (ck-macro-transformer ()
-    ((ck-cdr '(h . t)) 't)))
+(define-syntax em-cdr
+  (em-syntax-rules ()
+    ((em-cdr '(h . t)) 't)))
 
-(define-syntax ck-apply
-  (ck-macro-transformer ()
-    ((ck-apply 'keyword 'datum1 ... '(datum2 ...))
+(define-syntax em-apply
+  (em-syntax-rules ()
+    ((em-apply 'keyword 'datum1 ... '(datum2 ...))
      (keyword 'datum1 ... 'datum2 ...))))
 
-(define-syntax ck-call
-  (ck-macro-transformer ()
-    ((ck-apply 'keyword 'datum ...)
+(define-syntax em-call
+  (em-syntax-rules ()
+    ((em-apply 'keyword 'datum ...)
      (keyword 'datum ...))))
 
-(define-syntax ck-eval
-  (ck-macro-transformer ()
-    ((ck-eval '(keyword datum ...))
+(define-syntax em-eval
+  (em-syntax-rules ()
+    ((em-eval '(keyword datum ...))
      (keyword datum ...))))
 
-(define-syntax ck-error
-  (ck-macro-transformer ()
-    ((ck-error 'message 'arg ...)
-     (ck-suspend 'ck-error-aux 'message 'arg ...))))
+(define-syntax em-error
+  (em-syntax-rules ()
+    ((em-error 'message 'arg ...)
+     (em-suspend 'em-error-aux 'message 'arg ...))))
 
-(define-syntax ck-error-aux
+(define-syntax em-error-aux
   (syntax-rules ()
-    ((ck-error-aux s message arg ...)
+    ((em-error-aux s message arg ...)
      (syntax-error message arg ...))))
 
-(define-syntax ck-gensym
-  (ck-macro-transformer ()
-    ((ck-gensym) 'g)))
+(define-syntax em-gensym
+  (em-syntax-rules ()
+    ((em-gensym) 'g)))
 
-(define-syntax ck-generate-temporaries
-  (ck-macro-transformer ()
-    ((ck-generate-temporaries '()) '())
-    ((ck-generate-temporaries '(h . t))
-     (ck-cons (ck-gensym) (ck-generate-temporaries 't)))))
+(define-syntax em-generate-temporaries
+  (em-syntax-rules ()
+    ((em-generate-temporaries '()) '())
+    ((em-generate-temporaries '(h . t))
+     (em-cons (em-gensym) (em-generate-temporaries 't)))))
 
-(define-syntax ck-quote
-  (ck-macro-transformer ()
-    ((ck-quote 'x) ''x)))
+(define-syntax em-quote
+  (em-syntax-rules ()
+    ((em-quote 'x) ''x)))
 
 ;; Boolean logic
 
-(define-syntax ck-if
-  (ck-macro-transformer ()
-    ((ck-if '#f consequent alternate)
+(define-syntax em-if
+  (em-syntax-rules ()
+    ((em-if '#f consequent alternate)
      alternate)
-    ((ck-if 'test consequent alternate)
+    ((em-if 'test consequent alternate)
      consequent)))
 
-(define-syntax ck-not
-  (ck-macro-transformer ()
-    ((ck-not '#f)
+(define-syntax em-not
+  (em-syntax-rules ()
+    ((em-not '#f)
      '#t)
-    ((ck-not '_)
+    ((em-not '_)
      '#f)))
 
-(define-syntax ck-or
-  (ck-macro-transformer ()
-    ((ck-or)
+(define-syntax em-or
+  (em-syntax-rules ()
+    ((em-or)
      '#f)
-    ((ck-or 'x y ...)
-     (ck-if 'x 'x (ck-or y ...)))))
+    ((em-or 'x y ...)
+     (em-if 'x 'x (em-or y ...)))))
 
-(define-syntax ck-and
-  (ck-macro-transformer ()
-    ((ck-and 'x)
+(define-syntax em-and
+  (em-syntax-rules ()
+    ((em-and 'x)
      'x)
-    ((ck-and 'x y ...)
-     (ck-if 'x (ck-and y ...) '#f))))
+    ((em-and 'x y ...)
+     (em-if 'x (em-and y ...) '#f))))
 
-(define-syntax ck-null?
-  (ck-macro-transformer ()
-    ((ck-null? '())
+(define-syntax em-null?
+  (em-syntax-rules ()
+    ((em-null? '())
      '#t)
-    ((ck-null? '_)
+    ((em-null? '_)
      '#f)))
 
-(define-syntax ck-pair?
-  (ck-macro-transformer ()
-    ((ck-null? '(_ . _))
+(define-syntax em-pair?
+  (em-syntax-rules ()
+    ((em-null? '(_ . _))
      '#t)
-    ((ck-null? '_)
+    ((em-null? '_)
      '#f)))
 
-(define-syntax ck-list?
-  (ck-macro-transformer ()
-    ((ck-list? '())
+(define-syntax em-list?
+  (em-syntax-rules ()
+    ((em-list? '())
      '#t)
-    ((ck-list? '(_ . x))
-     (ck-list? 'x))
-    ((ck-list? '_)
+    ((em-list? '(_ . x))
+     (em-list? 'x))
+    ((em-list? '_)
      '#f)))
 
-(define-syntax ck-boolean?
-  (ck-macro-transformer ()
-    ((ck-boolean? '#f)
+(define-syntax em-boolean?
+  (em-syntax-rules ()
+    ((em-boolean? '#f)
      '#t)
-    ((ck-boolean? '#t)
+    ((em-boolean? '#t)
      '#t)
-    ((ck-boolean? '_)
+    ((em-boolean? '_)
      '#f)))
 
-(define-syntax ck-vector?
-  (ck-macro-transformer ()
-    ((ck-vector? '#(x ...))
+(define-syntax em-vector?
+  (em-syntax-rules ()
+    ((em-vector? '#(x ...))
      '#t)
-    ((ck-vector? '_)
+    ((em-vector? '_)
      '#f)))
 
-(define-syntax ck-symbol?
-  (ck-macro-transformer ()
-    ((ck-symbol? '(x . y)) '#f)
-    ((ck-symbol? '#(x ...)) '#f)
-    ((ck-symbol? 'x)
-     (ck-suspend 'ck-symbol?-aux 'x))))
+(define-syntax em-symbol?
+  (em-syntax-rules ()
+    ((em-symbol? '(x . y)) '#f)
+    ((em-symbol? '#(x ...)) '#f)
+    ((em-symbol? 'x)
+     (em-suspend 'em-symbol?-aux 'x))))
 
-(define-syntax ck-symbol?-aux
+(define-syntax em-symbol?-aux
   (syntax-rules ()
-    ((ck-symbol?-aux s x)
+    ((em-symbol?-aux s x)
      (begin
        (define-syntax test
 	 (syntax-rules ::: ()
-		       ((test x %s) (ck-resume %s '#t))
-		       ((test y %s) (ck-resume %s '#f))))
+		       ((test x %s) (em-resume %s '#t))
+		       ((test y %s) (em-resume %s '#f))))
        (test symbol s)))))
 
-(define-syntax ck-bound-identifier=?
-  (ck-macro-transformer ()
-    ((ck-bound-identifier=? 'id 'b)
-     (ck-suspend ck-bound-identifier=?-aux 'id 'b))))
+(define-syntax em-bound-identifier=?
+  (em-syntax-rules ()
+    ((em-bound-identifier=? 'id 'b)
+     (em-suspend em-bound-identifier=?-aux 'id 'b))))
 
-(define-syntax ck-bound-identifier=?-aux
+(define-syntax em-bound-identifier=?-aux
   (syntax-rules ()
-    ((ck-bound-identifier=?-aux s id b)
-     (bound-identifier=? id b (ck-resume s '#t) (ck-resume s '#f)))))
+    ((em-bound-identifier=?-aux s id b)
+     (bound-identifier=? id b (em-resume s '#t) (em-resume s '#f)))))
 
-(define-syntax ck-free-identifier=?
-  (ck-macro-transformer ()
-    ((ck-free-identifier=? 'id1 'id2)
-     (ck-suspend ck-free-identifier=?-aux 'id1 'id2))))
+(define-syntax em-free-identifier=?
+  (em-syntax-rules ()
+    ((em-free-identifier=? 'id1 'id2)
+     (em-suspend em-free-identifier=?-aux 'id1 'id2))))
 
-(define-syntax ck-free-identifier=?-aux
+(define-syntax em-free-identifier=?-aux
   (syntax-rules ()
-    ((ck-free-identifier=?-aux s id1 id2)
-     (free-identifier=? id1 id2 (ck-resume s '#t) (ck-resume s '#f)))))
+    ((em-free-identifier=?-aux s id1 id2)
+     (free-identifier=? id1 id2 (em-resume s '#t) (em-resume s '#f)))))
 
-(define-syntax ck-constant=?
-  (ck-macro-transformer ()
+(define-syntax em-constant=?
+  (em-syntax-rules ()
     ((ck= 'x 'y)
-     (ck-suspend ck-constant=?-aux 'x 'y))))
+     (em-suspend em-constant=?-aux 'x 'y))))
 
-(define-syntax ck-constant=?-aux
+(define-syntax em-constant=?-aux
   (syntax-rules ()
-    ((ck-constant=?-aux s x y)
+    ((em-constant=?-aux s x y)
      (begin
        (define-syntax test
 	 (syntax-rules ::: ()
-		       ((test x %s) (ck-resume %s '#t))
-		       ((test z %s) (ck-resume %s '#f))))
+		       ((test x %s) (em-resume %s '#t))
+		       ((test z %s) (em-resume %s '#f))))
        (test y s)))))
 
-(define-syntax ck-equal?
-  (ck-macro-transformer ()
-    ((ck-equal? '(x . y) '(u . v))
-     (ck-and (ck-equal? 'x 'u) (ck-equal? 'y 'v)))
-    ((ck-equal '#(x ...) '#(u ...))
-     (ck-and (ck-equal? 'x 'u) ...))
-    ((ck-equal '() '())
+(define-syntax em-equal?
+  (em-syntax-rules ()
+    ((em-equal? '(x . y) '(u . v))
+     (em-and (em-equal? 'x 'u) (em-equal? 'y 'v)))
+    ((em-equal '#(x ...) '#(u ...))
+     (em-and (em-equal? 'x 'u) ...))
+    ((em-equal '() '())
      '#t)
-    ((ck-equal 'x 'u)
-     (ck-if (ck-symbol? 'x)
-	    (ck-bound-identifier=? 'x 'u)
-	    (ck-constant=? 'x 'u)))
-    ((ck-equal '_ '_)
+    ((em-equal 'x 'u)
+     (em-if (em-symbol? 'x)
+	    (em-bound-identifier=? 'x 'u)
+	    (em-constant=? 'x 'u)))
+    ((em-equal '_ '_)
      '#f)))
 
 ;; List processing
 
-(define-syntax ck-caar
-  (ck-macro-transformer ()
-    ((ck-caar '((a . b) . c))
+(define-syntax em-caar
+  (em-syntax-rules ()
+    ((em-caar '((a . b) . c))
      'a)))
 
-(define-syntax ck-cadr
-  (ck-macro-transformer ()
-    ((ck-cadr '(a . (b . c)))
+(define-syntax em-cadr
+  (em-syntax-rules ()
+    ((em-cadr '(a . (b . c)))
      'b)))
 
-(define-syntax ck-cdar
-  (ck-macro-transformer ()
-    ((ck-cdar '((a . b) . c))
+(define-syntax em-cdar
+  (em-syntax-rules ()
+    ((em-cdar '((a . b) . c))
      'b)))
 
-(define-syntax ck-cddr
-  (ck-macro-transformer ()
-    ((ck-cddr '(a . (b . c)))
+(define-syntax em-cddr
+  (em-syntax-rules ()
+    ((em-cddr '(a . (b . c)))
      'c)))
 
-(define-syntax ck-first
-  (ck-macro-transformer ()
-    ((ck-first '(a . z))
+(define-syntax em-first
+  (em-syntax-rules ()
+    ((em-first '(a . z))
      'a)))
 
-(define-syntax ck-second
-  (ck-macro-transformer ()
-    ((ck-second '(a b . z))
+(define-syntax em-second
+  (em-syntax-rules ()
+    ((em-second '(a b . z))
      'b)))
 
-(define-syntax ck-third
-  (ck-macro-transformer ()
-    ((ck-third '(a b c . z))
+(define-syntax em-third
+  (em-syntax-rules ()
+    ((em-third '(a b c . z))
      'c)))
 
-(define-syntax ck-fourth
-  (ck-macro-transformer ()
-    ((ck-forth '(a b c d . z))
+(define-syntax em-fourth
+  (em-syntax-rules ()
+    ((em-forth '(a b c d . z))
      'd)))
 
-(define-syntax ck-fifth
-  (ck-macro-transformer ()
-    ((ck-fifth '(a b c d e . z))
+(define-syntax em-fifth
+  (em-syntax-rules ()
+    ((em-fifth '(a b c d e . z))
      'e)))
 
-(define-syntax ck-sixth
-  (ck-macro-transformer ()
-    ((ck-sixth '(a b c d e f . z))
+(define-syntax em-sixth
+  (em-syntax-rules ()
+    ((em-sixth '(a b c d e f . z))
      'f)))
 
-(define-syntax ck-seventh
-  (ck-macro-transformer ()
-    ((ck-seventh '(a b c d e f g . z))
+(define-syntax em-seventh
+  (em-syntax-rules ()
+    ((em-seventh '(a b c d e f g . z))
      'g)))
 
-(define-syntax ck-eighth
-  (ck-macro-transformer ()
-    ((ck-eighth '(a b c d e f g h . z))
+(define-syntax em-eighth
+  (em-syntax-rules ()
+    ((em-eighth '(a b c d e f g h . z))
      'h)))
 
-(define-syntax ck-ninth
-  (ck-macro-transformer ()
-    ((ck-ninth '(a b c d e f g h i . z))
+(define-syntax em-ninth
+  (em-syntax-rules ()
+    ((em-ninth '(a b c d e f g h i . z))
      'i)))
 
-(define-syntax ck-tenth
-  (ck-macro-transformer ()
-    ((ck-tenth '(a b c d e f g h i j . z))
+(define-syntax em-tenth
+  (em-syntax-rules ()
+    ((em-tenth '(a b c d e f g h i j . z))
      'j)))
 
-(define-syntax ck-make-list
-  (ck-macro-transformer ()
-    ((ck-make-list '() 'fill)
+(define-syntax em-make-list
+  (em-syntax-rules ()
+    ((em-make-list '() 'fill)
      '())
-    ((ck-make-list '(h . t) 'fill)
-     (ck-cons 'fill (ck-make-list 't 'fill)))))
+    ((em-make-list '(h . t) 'fill)
+     (em-cons 'fill (em-make-list 't 'fill)))))
 
-(define-syntax ck-reverse
-  (ck-macro-transformer ()
-    ((ck-reverse '())
+(define-syntax em-reverse
+  (em-syntax-rules ()
+    ((em-reverse '())
      '())
-    ((ck-reverse '(h ... t))
-     (ck-cons 't (ck-reverse '(h ...))))))
+    ((em-reverse '(h ... t))
+     (em-cons 't (em-reverse '(h ...))))))
 
-(define-syntax ck-list-tail
-  (ck-macro-transformer ()
-    ((ck-list-tail 'list '())
+(define-syntax em-list-tail
+  (em-syntax-rules ()
+    ((em-list-tail 'list '())
      'list)
-    ((ck-list-tail '(h . t) '(u . v))
-     (ck-list-tail 't 'v))))
+    ((em-list-tail '(h . t) '(u . v))
+     (em-list-tail 't 'v))))
 
-(define-syntax ck-drop
-  (ck-macro-transformer ()
-    ((ck-drop 'arg ...)
-     (ck-list-ref 'arg ...))))
+(define-syntax em-drop
+  (em-syntax-rules ()
+    ((em-drop 'arg ...)
+     (em-list-ref 'arg ...))))
 
-(define-syntax ck-list-ref
-  (ck-macro-transformer ()
-    ((ck-list-ref '(h . t) '())
+(define-syntax em-list-ref
+  (em-syntax-rules ()
+    ((em-list-ref '(h . t) '())
      'h)
-    ((ck-list-ref '(h . t) '(u . v))
-     (ck-list-ref 't 'v))))
+    ((em-list-ref '(h . t) '(u . v))
+     (em-list-ref 't 'v))))
 
-(define-syntax ck-take
-  (ck-macro-transformer ()
-    ((ck-take '_ '())
+(define-syntax em-take
+  (em-syntax-rules ()
+    ((em-take '_ '())
      '())
-    ((ck-take '(h . t) '(u . v))
-     (ck-cons 'h (ck-take 't 'v)))))
+    ((em-take '(h . t) '(u . v))
+     (em-cons 'h (em-take 't 'v)))))
 
-(define-syntax ck-take-right
-  (ck-macro-transformer ()
-    ((ck-take-right '(a ... . t) '())
+(define-syntax em-take-right
+  (em-syntax-rules ()
+    ((em-take-right '(a ... . t) '())
      't)
-    ((ck-take-right '(a ... b . t) '(u . v))     
-     `(,@(ck-take-right '(a ...) 'v) b . t)
+    ((em-take-right '(a ... b . t) '(u . v))     
+     `(,@(em-take-right '(a ...) 'v) b . t)
      )))
 
-(define-syntax ck-drop-right
-  (ck-macro-transformer ()
-    ((ck-drop-right '(a ... . t) '())
+(define-syntax em-drop-right
+  (em-syntax-rules ()
+    ((em-drop-right '(a ... . t) '())
      '(a ...))
-    ((ck-drop-right '(a ... b . t) '(u . v))
-     (ck-drop-right '(a ...) 'v))))
+    ((em-drop-right '(a ... b . t) '(u . v))
+     (em-drop-right '(a ...) 'v))))
 
-(define-syntax ck-last
-  (ck-macro-transformer ()
-    ((ck-last '(a ... b . t))
+(define-syntax em-last
+  (em-syntax-rules ()
+    ((em-last '(a ... b . t))
      'b)))
 
-(define-syntax ck-last-pair
-  (ck-macro-transformer ()
-    ((ck-last '(a ... b . t))
+(define-syntax em-last-pair
+  (em-syntax-rules ()
+    ((em-last '(a ... b . t))
      '(b . t))))
 
 ;; Folding, unfolding and mapping
 
-(define-syntax ck-fold
-  (ck-macro-transformer ()
-    ((ck-fold 'kons 'knil '(h . t) ...)
-     (ck-fold 'kons (kons 'h ... 'knil) 't ...))
-    ((ck-fold 'kons 'knil '_ ...)
+(define-syntax em-fold
+  (em-syntax-rules ()
+    ((em-fold 'kons 'knil '(h . t) ...)
+     (em-fold 'kons (kons 'h ... 'knil) 't ...))
+    ((em-fold 'kons 'knil '_ ...)
      'knil)))
 
-(define-syntax ck-fold-right
-  (ck-macro-transformer ()
-    ((ck-fold-right 'kons 'knil '(h . t) ...)
-     (kons 'h ... (ck-fold-right 'kons 'knil 't ...)))
-    ((ck-fold-right 'kons 'knil '_ ...)
+(define-syntax em-fold-right
+  (em-syntax-rules ()
+    ((em-fold-right 'kons 'knil '(h . t) ...)
+     (kons 'h ... (em-fold-right 'kons 'knil 't ...)))
+    ((em-fold-right 'kons 'knil '_ ...)
      'knil)))
 
-(define-syntax ck-unfold
-  (ck-macro-transformer ()
-    ((ck-unfold 'stop? 'mapper 'successor 'seed 'tail-mapper)
-     (ck-if (stop? 'seed)
+(define-syntax em-unfold
+  (em-syntax-rules ()
+    ((em-unfold 'stop? 'mapper 'successor 'seed 'tail-mapper)
+     (em-if (stop? 'seed)
 	    (tail-mapper 'seed)
-	    (ck-cons (mapper 'seed)
-		     (ck-unfold 'stop? 'mapper 'successor (successor 'seed) 'tail-mapper))))
-    ((ck-unfold 'stop? 'mapper 'successor 'seed)
-     (ck-unfold 'stop? 'mapper 'successor 'seed (ck-constant '())))))
+	    (em-cons (mapper 'seed)
+		     (em-unfold 'stop? 'mapper 'successor (successor 'seed) 'tail-mapper))))
+    ((em-unfold 'stop? 'mapper 'successor 'seed)
+     (em-unfold 'stop? 'mapper 'successor 'seed (em-constant '())))))
 
-(define-syntax ck-unfold-right
-  (ck-macro-transformer ()
-    ((ck-unfold-right 'stop? 'mapper 'successor 'seed 'tail)
-     (ck-if (stop? 'seed)
+(define-syntax em-unfold-right
+  (em-syntax-rules ()
+    ((em-unfold-right 'stop? 'mapper 'successor 'seed 'tail)
+     (em-if (stop? 'seed)
 	    'tail
-	    (ck-unfold-right 'stop?
+	    (em-unfold-right 'stop?
 			     'mapper
 			     'successor
 			     (successor 'seed)
-			     (ck-cons (mapper 'seed) 'tail))))
-    ((ck-unfold-right 'stop? 'mapper 'successor 'seed)
-     (ck-unfold-right 'stop? 'mapper 'successor 'seed '()))))
+			     (em-cons (mapper 'seed) 'tail))))
+    ((em-unfold-right 'stop? 'mapper 'successor 'seed)
+     (em-unfold-right 'stop? 'mapper 'successor 'seed '()))))
 
-(define-syntax ck-map
-  (ck-macro-transformer ()
-    ((ck-map 'proc '(h . t) ...)
-     (ck-cons (proc 'h ...) (ck-map 'proc 't ...)))
-    ((ck-map 'proc '_ ...)
+(define-syntax em-map
+  (em-syntax-rules ()
+    ((em-map 'proc '(h . t) ...)
+     (em-cons (proc 'h ...) (em-map 'proc 't ...)))
+    ((em-map 'proc '_ ...)
      '())))
 
-(define-syntax ck-append-map
-  (ck-macro-transformer ()
-    ((ck-append-map 'proc '(h . t) ...)
-     (ck-append (proc 'h ...) (ck-append-map 'proc 't ...)))
-    ((ck-append-map map 'proc '_)
+(define-syntax em-append-map
+  (em-syntax-rules ()
+    ((em-append-map 'proc '(h . t) ...)
+     (em-append (proc 'h ...) (em-append-map 'proc 't ...)))
+    ((em-append-map map 'proc '_)
      '())))
 
 ;; Filtering
 
-(define-syntax ck-filter
-  (ck-macro-transformer ()
-    ((ck-filter 'pred '())
+(define-syntax em-filter
+  (em-syntax-rules ()
+    ((em-filter 'pred '())
      '())
-    ((ck-filter 'pred '(h . t))
-     (ck-if (pred 'h)
-	    (ck-cons 'h (ck-filter 'pred 't))
-	    (ck-filter 'pred 't)))))
+    ((em-filter 'pred '(h . t))
+     (em-if (pred 'h)
+	    (em-cons 'h (em-filter 'pred 't))
+	    (em-filter 'pred 't)))))
 
-(define-syntax ck-remove
-  (ck-macro-transformer ()
-    ((ck-remove 'pred '())
+(define-syntax em-remove
+  (em-syntax-rules ()
+    ((em-remove 'pred '())
      '())
-    ((ck-remove 'pred '(h . t))
-     (ck-if (pred 'h)
-	    (ck-remove 'pred 't)
-	    (ck-cons 'h (ck-remove 'pred 't))))))
+    ((em-remove 'pred '(h . t))
+     (em-if (pred 'h)
+	    (em-remove 'pred 't)
+	    (em-cons 'h (em-remove 'pred 't))))))
 
 ;; Searching
 
-(define-syntax ck-find
-  (ck-macro-transformer ()
-    ((ck-find 'pred '())
+(define-syntax em-find
+  (em-syntax-rules ()
+    ((em-find 'pred '())
      '())
-    ((ck-find 'pred '(h . t))
-     (ck-if (pred 'h)
+    ((em-find 'pred '(h . t))
+     (em-if (pred 'h)
 	    'h
-	    (ck-find 'pred 't)))))
+	    (em-find 'pred 't)))))
 
-(define-syntax ck-find-tail
-  (ck-macro-transformer ()
-    ((ck-find-tail 'pred '())
+(define-syntax em-find-tail
+  (em-syntax-rules ()
+    ((em-find-tail 'pred '())
      '#f)
-    ((ck-find-tail 'pred '(h . t))
-     (ck-if (pred 'h)
+    ((em-find-tail 'pred '(h . t))
+     (em-if (pred 'h)
 	    '(h . t)
-	    (ck-find-tail 'pred 't)))))
+	    (em-find-tail 'pred 't)))))
 
-(define-syntax ck-take-while
-  (ck-macro-transformer ()
-    ((ck-take-while 'pred '())
+(define-syntax em-take-while
+  (em-syntax-rules ()
+    ((em-take-while 'pred '())
      '())
-    ((ck-take-while 'pred '(h . t))
-     (ck-if (pred 'h)
-	    (ck-cons 'h (ck-take-while 'pred 't))
+    ((em-take-while 'pred '(h . t))
+     (em-if (pred 'h)
+	    (em-cons 'h (em-take-while 'pred 't))
 	    '()))))
 
-(define-syntax ck-drop-while
-  (ck-macro-transformer ()
-    ((ck-drop-while 'pred '())
+(define-syntax em-drop-while
+  (em-syntax-rules ()
+    ((em-drop-while 'pred '())
      '())
-    ((ck-drop-while 'pred '(h . t))
-     (ck-if (pred 'h)
-	    (ck-drop-while 'pred 't)
+    ((em-drop-while 'pred '(h . t))
+     (em-if (pred 'h)
+	    (em-drop-while 'pred 't)
 	    '(h . t)))))
 
-(define-syntax ck-any
-  (ck-macro-transformer ()
-    ((ck-any 'pred '(h . t) ...)
-     (ck-or (pred 'h ...) (ck-any 'pred 't ...)))
-    ((ck-any 'pred '_ ...)
+(define-syntax em-any
+  (em-syntax-rules ()
+    ((em-any 'pred '(h . t) ...)
+     (em-or (pred 'h ...) (em-any 'pred 't ...)))
+    ((em-any 'pred '_ ...)
      '#f)))
 
-(define-syntax ck-every
-  (ck-macro-transformer ()
-    ((ck-every 'pred '() ...)
+(define-syntax em-every
+  (em-syntax-rules ()
+    ((em-every 'pred '() ...)
      '#t)
-    ((ck-every 'pred '(a b . x) ...)
-     (ck-and (pred 'a ...) (ck-every 'pred '(b . x) ...)))
-    ((ck-every 'pred '(h . t) ...)
+    ((em-every 'pred '(a b . x) ...)
+     (em-and (pred 'a ...) (em-every 'pred '(b . x) ...)))
+    ((em-every 'pred '(h . t) ...)
      (pred 'h ...))))
 
-(define-syntax ck-member
-  (ck-macro-transformer ()
-    ((ck-member 'obj 'list 'compare)
-     (ck-find-tail (ck-cut 'compare 'obj <>) 'list))
-    ((ck-member 'obj 'list)
-     (ck-member 'obj 'list 'ck-equal?))))
+(define-syntax em-member
+  (em-syntax-rules ()
+    ((em-member 'obj 'list 'compare)
+     (em-find-tail (em-cut 'compare 'obj <>) 'list))
+    ((em-member 'obj 'list)
+     (em-member 'obj 'list 'em-equal?))))
 
 ;; Association lists
 
-(define-syntax ck-assoc
-  (ck-macro-transformer ()
-    ((ck-assoc 'key '() 'compare)
+(define-syntax em-assoc
+  (em-syntax-rules ()
+    ((em-assoc 'key '() 'compare)
      '#f)
-    ((ck-assoc 'key '((k . v) . t) 'compare)
-     (ck-if (compare 'key 'k)
+    ((em-assoc 'key '((k . v) . t) 'compare)
+     (em-if (compare 'key 'k)
 	    '(k . v)
-	    (ck-assoc 'key 't 'compare)))
-    ((ck-assoc 'key 'alist)
-     (ck-assoc 'key 'alist 'ck-equal?))))
+	    (em-assoc 'key 't 'compare)))
+    ((em-assoc 'key 'alist)
+     (em-assoc 'key 'alist 'em-equal?))))
 
-(define-syntax ck-alist-delete
-  (ck-macro-transformer ()
-    ((ck-alist-delete 'key '() 'compare)
+(define-syntax em-alist-delete
+  (em-syntax-rules ()
+    ((em-alist-delete 'key '() 'compare)
      '())
-    ((ck-alist-delete 'key '((k . v) . t) 'compare)
-     (ck-if (compare 'key 'k)
-	    (ck-alist-delete 'key 't 'compare)
-	    (ck-cons '(k . v) (ck-alist-delete 'key 't 'compare))))
-    ((ck-alist-delete 'key 'alist)
-     (ck-alist-delete 'key 'alist 'ck-equal?))))
+    ((em-alist-delete 'key '((k . v) . t) 'compare)
+     (em-if (compare 'key 'k)
+	    (em-alist-delete 'key 't 'compare)
+	    (em-cons '(k . v) (em-alist-delete 'key 't 'compare))))
+    ((em-alist-delete 'key 'alist)
+     (em-alist-delete 'key 'alist 'em-equal?))))
 
 ;; Set operations
 
-(define-syntax ck-set<=
-  (ck-macro-transformer ()
-    ((ck-set<= 'compare '())
+(define-syntax em-set<=
+  (em-syntax-rules ()
+    ((em-set<= 'compare '())
      '#t)
-    ((ck-set<= 'compare 'list)
+    ((em-set<= 'compare 'list)
      '#t)
-    ((ck-set<= 'compare '() 'list)
+    ((em-set<= 'compare '() 'list)
      '#t)
-    ((ck-set<= 'compare '(h . t) 'list)
-     (ck-and (ck-member 'h 'list 'compare)
-	     (ck-set<= 'compare 't 'list)))
-    ((ck-set<= 'compare 'list1 'list2 'list ...)
-     (ck-and (ck-set<= 'compare 'list1 'list2)
-	     (ck-set<= 'compare 'list2 'list ...)))))
+    ((em-set<= 'compare '(h . t) 'list)
+     (em-and (em-member 'h 'list 'compare)
+	     (em-set<= 'compare 't 'list)))
+    ((em-set<= 'compare 'list1 'list2 'list ...)
+     (em-and (em-set<= 'compare 'list1 'list2)
+	     (em-set<= 'compare 'list2 'list ...)))))
 
-(define-syntax ck-set=
-  (ck-macro-transformer ()
-    ((ck-set= 'compare 'list)
+(define-syntax em-set=
+  (em-syntax-rules ()
+    ((em-set= 'compare 'list)
      '#t)
-    ((ck-set= 'compare 'list1 list2)
-     (ck-and (ck-set<= 'compare 'list1 'list2)
-	     (ck-set<= 'compare 'list2 'list1)))
-    ((ck-set= 'compare 'list1 'list2 'list ...)
-     (ck-and (ck-set= 'list1 'list2)
-	     (ck-set= 'list1 'list ...)))))
+    ((em-set= 'compare 'list1 list2)
+     (em-and (em-set<= 'compare 'list1 'list2)
+	     (em-set<= 'compare 'list2 'list1)))
+    ((em-set= 'compare 'list1 'list2 'list ...)
+     (em-and (em-set= 'list1 'list2)
+	     (em-set= 'list1 'list ...)))))
 
-(define-syntax ck-set-adjoin
-  (ck-macro-transformer ()
-    ((ck-set-adjoin 'compare 'list)
+(define-syntax em-set-adjoin
+  (em-syntax-rules ()
+    ((em-set-adjoin 'compare 'list)
      'list)
-    ((ck-set-adjoin 'compare 'list 'element1 'element2 ...)
-     (ck-if (ck-member 'element1 'list 'compare)
-	    (ck-set-adjoin 'compare 'list 'element2 ...)
-	    (ck-set-adjoin 'compare (ck-cons 'element1 'list) 'element2 ...)))))
+    ((em-set-adjoin 'compare 'list 'element1 'element2 ...)
+     (em-if (em-member 'element1 'list 'compare)
+	    (em-set-adjoin 'compare 'list 'element2 ...)
+	    (em-set-adjoin 'compare (em-cons 'element1 'list) 'element2 ...)))))
 
-(define-syntax ck-set-union
-  (ck-macro-transformer ()
-    ((ck-set-union 'compare 'list ...)
-     (ck-apply 'ck-set-adjoin 'compare '() (ck-append 'list ...)))))
+(define-syntax em-set-union
+  (em-syntax-rules ()
+    ((em-set-union 'compare 'list ...)
+     (em-apply 'em-set-adjoin 'compare '() (em-append 'list ...)))))
 
-(define-syntax ck-set-intersection
-  (ck-macro-transformer ()
-    ((ck-set-intersection 'compare 'list)
+(define-syntax em-set-intersection
+  (em-syntax-rules ()
+    ((em-set-intersection 'compare 'list)
      'list)
-    ((ck-set-intersection 'compare 'list1 'list2)
-     (ck-filter (ck-cut 'ck-member <> 'list2 'compare) 'list1))
-    ((ck-set-intersection 'compare 'list1 'list2 'list ...)
-     (ck-set-intersection 'compare (ck-set-intersection 'list1 'list2) 'list ...))))
+    ((em-set-intersection 'compare 'list1 'list2)
+     (em-filter (em-cut 'em-member <> 'list2 'compare) 'list1))
+    ((em-set-intersection 'compare 'list1 'list2 'list ...)
+     (em-set-intersection 'compare (em-set-intersection 'list1 'list2) 'list ...))))
 
-(define-syntax ck-set-difference
-  (ck-macro-transformer ()
-    ((ck-set-difference 'compare 'list)
+(define-syntax em-set-difference
+  (em-syntax-rules ()
+    ((em-set-difference 'compare 'list)
      'list)
-    ((ck-set-difference 'compare 'list1 'list2)
-     (ck-remove (ck-cut 'ck-member <> 'list2 'compare) 'list1))
-    ((ck-set-difference 'compare 'list1 'list2 'list ...)
-     (ck-set-difference 'compare (ck-set-difference 'list1 'list2) 'list ...))))
+    ((em-set-difference 'compare 'list1 'list2)
+     (em-remove (em-cut 'em-member <> 'list2 'compare) 'list1))
+    ((em-set-difference 'compare 'list1 'list2 'list ...)
+     (em-set-difference 'compare (em-set-difference 'list1 'list2) 'list ...))))
 
-(define-syntax ck-set-xor
-  (ck-macro-transformer ()
-    ((ck-set-xor 'compare 'list1 'list2)
-     (ck-set-union 'compare
-		   (ck-set-difference 'compare 'list1 'list2)
-		   (ck-set-difference 'compare 'list2 'list1)))))
+(define-syntax em-set-xor
+  (em-syntax-rules ()
+    ((em-set-xor 'compare 'list1 'list2)
+     (em-set-union 'compare
+		   (em-set-difference 'compare 'list1 'list2)
+		   (em-set-difference 'compare 'list2 'list1)))))
 
 ;; Vector processing
 
-(define-syntax ck-vector
-  (ck-macro-transformer ()
-    ((ck-vector 'element ...)
+(define-syntax em-vector
+  (em-syntax-rules ()
+    ((em-vector 'element ...)
      '#(element ...))))
 
-(define-syntax ck-list->vector
-  (ck-macro-transformer ()
-    ((ck-list->vector '(element ...))
+(define-syntax em-list->vector
+  (em-syntax-rules ()
+    ((em-list->vector '(element ...))
      '#(element ...))))
 
-(define-syntax ck-vector->list
-  (ck-macro-transformer ()
-    ((ck-list->vector '#(x ...))
+(define-syntax em-vector->list
+  (em-syntax-rules ()
+    ((em-list->vector '#(x ...))
      '(x ...))))
 
-(define-syntax ck-vector-map
-  (ck-macro-transformer ()
-    ((ck-vector-map 'proc 'vector ...)
-     (ck-list->vector (ck-map 'proc (ck-vector->list 'vector) ...)))))
+(define-syntax em-vector-map
+  (em-syntax-rules ()
+    ((em-vector-map 'proc 'vector ...)
+     (em-list->vector (em-map 'proc (em-vector->list 'vector) ...)))))
 
-(define-syntax ck-vector-ref
-  (ck-macro-transformer ()
-    ((ck-vector-ref '#(element1 element2 ...) '())
+(define-syntax em-vector-ref
+  (em-syntax-rules ()
+    ((em-vector-ref '#(element1 element2 ...) '())
      'element1)
-    ((ck-vector-ref '#(element1 element2 ...) '(h . t))
-     (ck-vector-ref '#(element2 ...) 't))))
+    ((em-vector-ref '#(element1 element2 ...) '(h . t))
+     (em-vector-ref '#(element2 ...) 't))))
 
 ;; Combinatorics
 
-(define-syntax ck-0
-  (ck-macro-transformer ()
-    ((ck-0)
+(define-syntax em-0
+  (em-syntax-rules ()
+    ((em-0)
      '())))
 
-(define-syntax ck-1
-  (ck-macro-transformer ()
-    ((ck-1)
+(define-syntax em-1
+  (em-syntax-rules ()
+    ((em-1)
      '(0))))
 
-(define-syntax ck-2
-  (ck-macro-transformer ()
-    ((ck-2)
+(define-syntax em-2
+  (em-syntax-rules ()
+    ((em-2)
      '(0 1))))
 
-(define-syntax ck-3
-  (ck-macro-transformer ()
-    ((ck-3)
+(define-syntax em-3
+  (em-syntax-rules ()
+    ((em-3)
      '(0 1 2))))
 
-(define-syntax ck-4
-  (ck-macro-transformer ()
-    ((ck-4)
+(define-syntax em-4
+  (em-syntax-rules ()
+    ((em-4)
      '(0 1 2 3))))
 
-(define-syntax ck-5
-  (ck-macro-transformer ()
-    ((ck-5)
+(define-syntax em-5
+  (em-syntax-rules ()
+    ((em-5)
      '(0 1 2 3 4))))
 
-(define-syntax ck-6
-  (ck-macro-transformer ()
-    ((ck-6)
+(define-syntax em-6
+  (em-syntax-rules ()
+    ((em-6)
      '(0 1 2 3 4 5))))
 
-(define-syntax ck-7
-  (ck-macro-transformer ()
-    ((ck-7)
+(define-syntax em-7
+  (em-syntax-rules ()
+    ((em-7)
      '(0 1 2 3 4 5 6))))
 
-(define-syntax ck-8
-  (ck-macro-transformer ()
-    ((ck-8)
+(define-syntax em-8
+  (em-syntax-rules ()
+    ((em-8)
      '(0 1 2 3 4 5 6 7))))
 
-(define-syntax ck-9
-  (ck-macro-transformer ()
-    ((ck-9)
+(define-syntax em-9
+  (em-syntax-rules ()
+    ((em-9)
      '(0 1 2 3 4 5 6 7 8))))
 
-(define-syntax ck-10
-  (ck-macro-transformer ()
-    ((ck-10)
+(define-syntax em-10
+  (em-syntax-rules ()
+    ((em-10)
      '(0 1 2 3 4 5 6 7 8 9))))
 
-(define-syntax ck-=
-  (ck-macro-transformer ()
-    ((ck-= '_)
+(define-syntax em=
+  (em-syntax-rules ()
+    ((em= '_)
      '#t)
-    ((ck-= '() '())
+    ((em= '() '())
      '#t)
-    ((ck-= '(h . t) '())
+    ((em= '(h . t) '())
      '#f)
-    ((ck-= '() '(h . t))
+    ((em= '() '(h . t))
      '#f)
-    ((ck-= '(h . t) '(u . v))
-     (ck-= 't 'v))
-    ((ck-= 'list1 'list2 'list ...)
-     (ck-and (ck-= 'list1 'list2)
-	     (ck-= 'list1 'list ...)))))
+    ((em= '(h . t) '(u . v))
+     (em= 't 'v))
+    ((em= 'list1 'list2 'list ...)
+     (em-and (em= 'list1 'list2)
+	     (em= 'list1 'list ...)))))
 
-(define-syntax ck-<
-  (ck-macro-transformer ()
-    ((ck-<)
+(define-syntax em<
+  (em-syntax-rules ()
+    ((em<)
      '#t)
-    ((ck-< 'list)
+    ((em< 'list)
      '#t)
-    ((ck-< '_ '())
+    ((em< '_ '())
      '#f)
-    ((ck-< '() '_)
+    ((em< '() '_)
      '#t)
-    ((ck-< '(t . h) '(u . v))
-     (ck-< 'h 'v))
-    ((ck-< 'list1 'list2 'list ...)
-     (ck-and (ck-< 'list1 'list2)
-	     (ck-< 'list2 'list ...)))))
+    ((em< '(t . h) '(u . v))
+     (em< 'h 'v))
+    ((em< 'list1 'list2 'list ...)
+     (em-and (em< 'list1 'list2)
+	     (em< 'list2 'list ...)))))
 
-(define-syntax ck-<=
-  (ck-macro-transformer ()
-    ((ck-<=)
+(define-syntax em<=
+  (em-syntax-rules ()
+    ((em<=)
      '#t)
-    ((ck-<= 'list)
+    ((em<= 'list)
      '#t)
-    ((ck-<= '() '_)
+    ((em<= '() '_)
      '#t)
-    ((ck-<= '_ '())
+    ((em<= '_ '())
      '#f)
-    ((ck-<= '(t . h) '(u . v))
-     (ck-<= 'h 'v))
-    ((ck-<= 'list1 'list2 'list ...)
-     (ck-and (ck-<= 'list1 'list2)
-	     (ck-<= 'list2 'list ...)))))
+    ((em<= '(t . h) '(u . v))
+     (em<= 'h 'v))
+    ((em<= 'list1 'list2 'list ...)
+     (em-and (em<= 'list1 'list2)
+	     (em<= 'list2 'list ...)))))
 
-(define-syntax ck->
-  (ck-macro-transformer ()
-    ((ck-> 'list ...)
-     (ck-apply 'ck-< (ck-reverse '(list ...))))))
+(define-syntax em>
+  (em-syntax-rules ()
+    ((em> 'list ...)
+     (em-apply 'em< (em-reverse '(list ...))))))
 
-(define-syntax ck->=
-  (ck-macro-transformer ()
-    ((ck->= 'list ...)
-     (ck-apply 'ck-<= (ck-reverse '(list ...))))))
+(define-syntax em>=
+  (em-syntax-rules ()
+    ((em>= 'list ...)
+     (em-apply 'em<= (em-reverse '(list ...))))))
 
-(define-syntax ck-zero? ck-null?)
+(define-syntax em-zero? em-null?)
 
-(define-syntax ck-even?
-  (ck-macro-transformer ()
-    ((ck-even? '())
+(define-syntax em-even?
+  (em-syntax-rules ()
+    ((em-even? '())
      '#t)
-    ((ck-even? '(a b . c))
-     (ck-even? 'c))
-    ((ck-even? '_)
+    ((em-even? '(a b . c))
+     (em-even? 'c))
+    ((em-even? '_)
      '#f)))
 
-(define-syntax ck-odd?
-  (ck-macro-transformer ()
-    ((ck-odd? 'list)
-     (ck-not (ck-even? 'list)))))
+(define-syntax em-odd?
+  (em-syntax-rules ()
+    ((em-odd? 'list)
+     (em-not (em-even? 'list)))))
 
-(define-syntax ck-+ ck-append)
+(define-syntax em+ em-append)
 
-(define-syntax ck--
-  (ck-macro-transformer ()
-    ((ck-- 'list)
+(define-syntax em-
+  (em-syntax-rules ()
+    ((em- 'list)
      'list)
-    ((ck-- 'list '())
+    ((em- 'list '())
      'list)
-    ((ck-- '(a ... b) '(u . v))
-     (ck-- '(a ...) 'v))
-    ((ck-- 'list1 'list2 'list ...)
-     (ck-- (ck-- 'list1 'list2) 'list ...))))
+    ((em- '(a ... b) '(u . v))
+     (em- '(a ...) 'v))
+    ((em- 'list1 'list2 'list ...)
+     (em- (em- 'list1 'list2) 'list ...))))
 
-(define-syntax ck-*
-  (ck-macro-transformer ()
-    ((ck-*)
+(define-syntax em*
+  (em-syntax-rules ()
+    ((em*)
      '(()))
-    ((ck-* 'list1 'list2 ...)
-     (ck-*-aux 'list1 (ck-* 'list2 ...)))))
+    ((em* 'list1 'list2 ...)
+     (em*-aux 'list1 (em* 'list2 ...)))))
 
-(define-syntax ck-*-aux
-  (ck-macro-transformer ()
-    ((ck-*-aux '(x ...) 'list)
-     (ck-append (ck-map (ck-cut 'ck-cons 'x <>) 'list) ...))
-    ((ck-*-aux arg ...)
-     (ck-error '"???" 'arg ...))))
+(define-syntax em*-aux
+  (em-syntax-rules ()
+    ((em*-aux '(x ...) 'list)
+     (em-append (em-map (em-cut 'em-cons 'x <>) 'list) ...))))
 
-(define-syntax ck-quotient
-  (ck-macro-transformer ()
-    ((ck-quotient 'list 'k)
-     (ck-if (ck->= 'list 'k)
-	    (ck-cons (ck-car 'list)
-		     (ck-quotient (ck-list-tail 'list 'k) 'k))
+(define-syntax em-quotient
+  (em-syntax-rules ()
+    ((em-quotient 'list 'k)
+     (em-if (em>= 'list 'k)
+	    (em-cons (em-car 'list)
+		     (em-quotient (em-list-tail 'list 'k) 'k))
 	    '()))))
 
-(define-syntax ck-remainder
-  (ck-macro-transformer ()
-    ((ck-quotient 'list 'k)
-     (ck-if (ck->= 'list 'k)
-	    (ck-remainder (ck-list-tail 'list 'k) 'k)
+(define-syntax em-remainder
+  (em-syntax-rules ()
+    ((em-quotient 'list 'k)
+     (em-if (em>= 'list 'k)
+	    (em-remainder (em-list-tail 'list 'k) 'k)
 	    'list))))
 
-(define-syntax ck-binom
-  (ck-macro-transformer ()
-    ((ck-binom 'list '())
+(define-syntax em-binom
+  (em-syntax-rules ()
+    ((em-binom 'list '())
      '(()))
-    ((ck-binom '() '(h . t))
+    ((em-binom '() '(h . t))
      '())
-    ((ck-binom '(u . v) '(h . t))
-     (ck-append (ck-map (ck-cut 'ck-cons u <>) (ck-binom 'v 't))
-		(ck-binom 'v '(h . t))))))
+    ((em-binom '(u . v) '(h . t))
+     (em-append (em-map (em-cut 'em-cons u <>) (em-binom 'v 't))
+		(em-binom 'v '(h . t))))))
 
-(define-syntax ck-fact
-  (ck-macro-transformer ()
-    ((ck-fact '())
+(define-syntax em-fact
+  (em-syntax-rules ()
+    ((em-fact '())
      '(()))
-    ((ck-fact 'list)
-     (ck-append-map 'ck-fact-cons*
-		    'list (ck-map 'ck-fact (ck-fact-del 'list))))))
+    ((em-fact 'list)
+     (em-append-map 'em-fact-cons*
+		    'list (em-map 'em-fact (em-fact-del 'list))))))
 
-(define-syntax ck-fact-del
-  (ck-macro-transformer ()
-    ((ck-fact-del '())
+(define-syntax em-fact-del
+  (em-syntax-rules ()
+    ((em-fact-del '())
      '())
-    ((ck-fact-del '(h . t))
-     `(t ,@(ck-map (ck-cut 'ck-cons 'h <>) (ck-fact-del 't))))))
+    ((em-fact-del '(h . t))
+     `(t ,@(em-map (em-cut 'em-cons 'h <>) (em-fact-del 't))))))
 
-(define-syntax ck-fact-cons*
-  (ck-macro-transformer ()
-    ((ck-fact-cons* 'a '((l ...) ...))
+(define-syntax em-fact-cons*
+  (em-syntax-rules ()
+    ((em-fact-cons* 'a '((l ...) ...))
      '((a l ...) ...))))
  
