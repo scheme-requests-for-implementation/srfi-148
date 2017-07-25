@@ -112,15 +112,15 @@
 		 ((em-list 'c) => 'd)
 		 '(a d)))))
 	  (em (em-quote (m 'foo)))))
-
+ 
       (test-equal "Pattern binding with ellipsis"
 	'(foo bar (foo))
 	(letrec-syntax
 	    ((m
 	      (em-syntax-rules ()
 		((m 'a 'x ...)
-		 ((em-make-list (em-2) 'a) => '(b c))
-		 ((em-list 'c) => 'd)
+		 ((em-make-list (em-2) 'a) => '(b c ...))
+		 ('(c ...) => 'd)
 		 '(a x ... d)))))
 	  (em (em-quote (m 'foo 'bar)))))
 
