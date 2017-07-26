@@ -70,7 +70,7 @@ All previous issues have been resolved.
   <code>em-syntax-rules</code>, which allows one to write eager
   macros, while retaining the hygiene and beauty of <code>syntax-rules</code>.
   This high-level system of eager macros is based on the idea of
-  eager macros, which has
+  CK-macros, which has
   been <a href="http://okmij.org/ftp/Scheme/macros.html#ck-macros">popularized
   by Oleg Kiselyov</a>.
 </p>
@@ -257,7 +257,7 @@ well-known <code>syntax-rules</code>, namely of one of the two forms:
   elements whose corresponding patterns are of the
   form <code>'&lt;pattern&gt;</code>.  The output of an eager
   macro is handled as follows: If the template is of the
-  form <code>&lt;'template&gt;</code>, the eager macro expands
+  form <code>'&lt;template&gt;</code>, the eager macro expands
   into <code>&lt;template&gt;</code> (which the pattern variables
   substituted); if the template is unquoted, the eager macro
   expands into the expansion of the template.  This behavior is
@@ -328,7 +328,7 @@ This SRFI extends 7.1 of the R7RS as follows:
    &xrarr; (&lt;top-level pattern&gt; &lt;pattern binding spec&gt; ... &lt;top-level template&gt;)
 
  &lt;pattern binding spec&gt;
-   &xrarr; (&lt;template&gt; =&gt; &lt;top-level pattern element&gt;)
+   &xrarr; (&lt;top-level template&gt; =&gt; &lt;top-level pattern element&gt;)
 
  &lt;top-level pattern&gt;
    &xrarr; (&lt;identifier&gt; &lt;top-level pattern element&gt; ...)
@@ -437,13 +437,6 @@ the following exceptions and additions:
 <ul>
   <li>
     <p>
-    <code>quote</code> is not allowed to appear in the
-    <code>&lt;literal&gt;</code>s. It is considered auxiliary syntax
-    that is always interpreted as a literal identifier.
-    </p>
-  </li>
-  <li>
-    <p>
     A top-level pattern must be a list pattern without a dotted
     tail. (No expressive power is lost because at top-level, every
     pattern with a dotted tail can be rewritten, together with the
@@ -457,6 +450,14 @@ the following exceptions and additions:
     patterns can also be a <em>quoted pattern</em>, that is a pattern
     of the form <code>'&lt;pattern&gt;</code>.  A quoted pattern does
     not count as a list pattern.
+    </p>
+  </li>
+  <li>
+    <p>
+      The identifier <code>quote</code> may appear amongst the list
+      of <code>&lt;literal&gt;</code>s.  (As a quoted pattern does not
+      count as a list pattern, the <code>quote</code> identifying
+      quoted patterns is never considered a literal identifier.)
     </p>
   </li>
   <li>
@@ -1699,6 +1700,14 @@ syntax-rules: macros that compose better</em></a>.
   of <code>syntax-rules</code>
   (see <a href="http://srfi-email.schemers.org/srfi-53/msg/2771559">this
   message</a>).
+</p>
+
+<p>
+  Finally, I would like to thank William Clinger whose experiments
+  with his Larceny implementation of Scheme showed that a previous
+  version of the sample implementation of this SRFI (and of SRFI 147)
+  relied on an unpropitious assumption on the semantics of a corner
+  case of the R7RS macro system.
 </p>
 
 <h1>Copyright</h1> Copyright (C) Marc Nieper-Wi&szlig;kirchen (2016, 2017).

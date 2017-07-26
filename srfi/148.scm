@@ -20,6 +20,7 @@
 ;; CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ;; SOFTWARE.
 
+
 ;; Secret syntactic literals
 (define-syntax :call (syntax-rules ()))
 (define-syntax :prepare (syntax-rules ()))
@@ -88,49 +89,50 @@
        (m kt kf)))))
 
 (define-syntax em-syntax-rules
-  (syntax-rules ()
+  (syntax-rules (=>)
     ((em-syntax-rules (literal ...)
        (pattern (element => var) ... template)
        ...)
-     (em-syntax-rules-aux1 free-identifier=? () (... ...)
-				(literal ...) ((pattern (element => var) ... template) ...)))
+     (em-syntax-rules-aux1 quote free-identifier=? () (... ...)
+			   (literal ...) ((pattern (element => var) ... template) ...)))
     ((em-syntax-rules ellipsis (literal ...)
        (pattern (element => var) ... template)
        ...)
-     (em-syntax-rules-aux1 bound-identifier=? (ellipsis) ellipsis
-				(literal ...) ((pattern (element => var) ... template) ...)))
+     (em-syntax-rules-aux1 quote bound-identifier=? (ellipsis) ellipsis
+			   (literal ...) ((pattern (element => var) ... template) ...)))
     ((em-syntax-rules . _)
      (syntax-error "invalid em-syntax-rules syntax"))))
 
 (define-syntax em-syntax-rules-aux1
   (syntax-rules (=>)
-    ((em-syntax-rules-aux1 c e* e l* ((p t) ...))
-     (em-syntax-rules-aux2 c e* e l* ((p t) ...)))
+    ((em-syntax-rules-aux1 q c e* e l* ((p t) ...))
+     (em-syntax-rules-aux2 q c e* e l* ((p t) ...)))
     
-    ((em-syntax-rules-aux1 c e* e l* r*)
-     (em-syntax-rules-aux1 a c e* e l* r* () ()))
+    ((em-syntax-rules-aux1 q c e* e l* r*)
+     (em-syntax-rules-aux1 q a c e* e l* r* () ()))
 
-    ((em-syntax-rules-aux1 a c e* e l* ((p t) . r*) (r1 ...) r2*)
-     (em-syntax-rules-aux1 a c e* e l* r* (r1 ... (p t)) r2*))
+    ((em-syntax-rules-aux1 q a c e* e l* ((p t) . r*) (r1 ...) r2*)
+     (em-syntax-rules-aux1 q a c e* e l* r* (r1 ... (p t)) r2*))
 
-    ((em-syntax-rules-aux1 a c e* e l* (((_ p ...) (i => v) w ... t) . r*) (r1 ...) (r2 ...))
-     (em-syntax-rules-aux1 a c e* e l* r*
-				(r1 ... ((_ p ...) (a i '(p ...))))
-				(r2 ... ((_ v '(p ...)) w ... t))))
+    ((em-syntax-rules-aux1 q a c e* e l* (((_ p ...) (i => v) w ... t) . r*) (r1 ...) (r2 ...))
+     (em-syntax-rules-aux1 q a c e* e l* r*
+			   (r1 ... ((_ p ...) (a i p ...)))
+			   (r2 ... ((_ v p ...) w ... t))))
 
-    ((em-syntax-rules-aux1 a c e* e l* () r1* r2*)
+    ((em-syntax-rules-aux1 q a c e* e l* () r1* r2*)
      (begin (define-syntax a
-	      (em-syntax-rules-aux1 c e* e l* r2*))
-	    (em-syntax-rules-aux2 c e* e l* r1*)))))
+	      (em-syntax-rules-aux1 q c e* e l* r2*))
+	    (em-syntax-rules-aux2 q c e* e l* r1*)))))
 
 (define-syntax em-syntax-rules-aux2
   (syntax-rules (quote)
-    ((em-syntax-rules-aux2 c e* e (l ...) ((p t) ...))
+    ((em-syntax-rules-aux2 :quote c e* e (l ...) ((p t) ...))
      (begin (define-syntax o
-	      (em-syntax-rules-aux2 o c e* e (l ...) ((p t) ...) ()))
+	      (em-syntax-rules-aux2 :quote o c e* e (l ...) ((p t) ...) ()))
 	    o))
-    ((em-syntax-rules-aux2 o c (e? ...) e (l ...) () ((p q r t) ...))
-     (syntax-rules e? ... (l ... quote :prepare :call)
+
+    ((em-syntax-rules-aux2 :quote o c (e? ...) e (l ...) () ((p q r t) ...))
+     (syntax-rules e? ... (l ... :quote :prepare :call)
 		   ((_ :prepare s . p)
 		    (ck s "arg" (o) . q))
 		   ...
@@ -140,33 +142,34 @@
 		   ...
 		   ((_ . args) (ck () (o . args)))))
     
-    ((em-syntax-rules-aux2 o c e* e l* (((op . p) t) . pt*) qu*)
-     (em-syntax-rules-aux2 o c e* e l* pt* qu* (p t) () () ()))
+    ((em-syntax-rules-aux2 :quote o c e* e l* (((op . p) t) . pt*) qu*)
+     (em-syntax-rules-aux2 :quote o c e* e l* pt* qu* (p t) () () ()))
     
-    ((em-syntax-rules-aux2 o c e* e l* pt* (qu ...) (() t) p q r)
-     (em-syntax-rules-aux2 o c e* e l* pt* (qu ... (p q r t))))
+    ((em-syntax-rules-aux2 :quote o c e* e l* pt* (qu ...) (() t) p q r)
+     (em-syntax-rules-aux2 :quote o c e* e l* pt* (qu ... (p q r t))))
     
-    ((em-syntax-rules-aux2 o c e* e l* pt* qu* (('x maybe-ellipsis . p) t)
-			       (y ...) (z ...) (w ...))
+    ((em-syntax-rules-aux2 :quote o c e* e l* pt* qu* (('x maybe-ellipsis . p) t)
+			   (y ...) (z ...) (w ...))
      (c e maybe-ellipsis
-	(em-syntax-rules-aux2 o c e* e l* pt* qu* (p t) (y ... %x e) (z ... %x e)
-				  (w ... 'x e))
-	(em-syntax-rules-aux2  o c e* e l* pt* qu* ((maybe-ellipsis . p) t) (y ... %x) (z ... %x)
-				  (w ... 'x))))
+	(em-syntax-rules-aux2 :quote o c e* e l* pt* qu* (p t) (y ... %x e) (z ... %x e)
+			      (w ... (:quote x) e))
+	(em-syntax-rules-aux2 :quote o c e* e l* pt* qu* ((maybe-ellipsis . p) t) (y ... %x) (z ... %x)
+			      (w ... (:quote x)))))
     
-    ((em-syntax-rules-aux2 o c e* e l* pt* qu* (('x . p) t) (y ...) (z ...) (w ...))
-     (em-syntax-rules-aux2 o c e* e l* pt* qu* (p t) (y ... %x) (z ... %x) (w ... 'x)))
+    ((em-syntax-rules-aux2 :quote o c e* e l* pt* qu* (('x . p) t) (y ...) (z ...) (w ...))
+     (em-syntax-rules-aux2 :quote o c e* e l* pt* qu* (p t) (y ... %x) (z ... %x) (w ... (:quote x))))
     
-    ((em-syntax-rules-aux2 o c e* e l* pt* qu* ((x maybe-ellipsis . p) t)
-			       (y ...) (z ...) (w ...))
+    ((em-syntax-rules-aux2 :quote o c e* e l* pt* qu* ((x maybe-ellipsis . p) t)
+			   (y ...) (z ...) (w ...))
      (c e maybe-ellipsis
-	(em-syntax-rules-aux2 o c e* e l* pt* qu* (p t) (y ... %x e) (z ... '%x e)
-				  (w ... 'x e))
-	(em-syntax-rules-aux2 o c e* e l* pt* qu* ((maybe-ellipsis . p) t)
-				  (y ... %x) (z ... '%x) (w ... 'x))))
-
-    ((em-syntax-rules-aux2 o c e* e l* pt* qu* ((x . p) t) (y ...) (z ...) (w ...))
-     (em-syntax-rules-aux2 o c e* e l* pt* qu* (p t) (y ... %x) (z ... '%x) (w ... 'x)))))
+	(em-syntax-rules-aux2 :quote o c e* e l* pt* qu* (p t) (y ... %x e) (z ... (:quote %x) e)
+			      (w ... (:quote x) e))
+	(em-syntax-rules-aux2 :quote o c e* e l* pt* qu* ((maybe-ellipsis . p) t)
+			      (y ... %x) (z ... (:quote %x)) (w ... (:quote x)))))
+    
+    ((em-syntax-rules-aux2 :quote o c e* e l* pt* qu* ((x . p) t) (y ...) (z ...) (w ...))
+     (em-syntax-rules-aux2 :quote o c e* e l* pt* qu* (p t) (y ... %x)
+			   (z ... (:quote %x)) (w ... (:quote x))))))
 
 (define-syntax em
   (syntax-rules (quote :prepare :call)

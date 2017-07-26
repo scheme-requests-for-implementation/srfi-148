@@ -25,9 +25,26 @@
 	  let-syntax
 	  letrec-syntax
 	  syntax-rules)
-  (import (rename (scheme base)
+  (import (rename (except (scheme base) let-syntax letrec-syntax)
 		  (syntax-rules scheme-syntax-rules)
-		  (define-syntax scheme-define-syntax)
-		  (let-syntax scheme-let-syntax)
-		  (letrec-syntax scheme-letrec-syntax)))
+		  (define-syntax scheme-define-syntax)))
+  (cond-expand
+   ;; Larceny exports let-syntax and letrec-syntax with R6RS semantcs,
+   ;; which is incompatible to the R7RS semantics.
+   (larceny
+    (import (rename (only (scheme base) let-syntax letrec-syntax)
+		    (let-syntax let-syntax/splicing)
+		    (letrec-syntax letrec-syntax/splicing)))
+    (begin
+      (scheme-define-syntax scheme-let-syntax
+	(scheme-syntax-rules ()
+	  ((scheme-let-syntax bindings . body)
+	   (let () (let-syntax/splicing bindings . body)))))
+      
+      (scheme-define-syntax scheme-letrec-syntax
+	(scheme-syntax-rules ()
+	  ((scheme-letrec-syntax bindings . body)
+	   (let () (letrec-syntax/splicing bindings . body)))))))
+   (else
+    (import (prefix (only (scheme base) let-syntax letrec-syntax) scheme-))))
   (include "147.scm"))
