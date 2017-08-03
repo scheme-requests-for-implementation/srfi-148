@@ -177,7 +177,7 @@
      (ck s "arg" (em) 'expression))
     ((em :call s 'expression)
      (let ()
-       (em-quasiquote (let () (define x ,expression) x))))
+       (em-quasiquote (let () (define-values x ,expression) (apply values x)))))
     ((em expression)
      (ck () (em expression)))))
 
