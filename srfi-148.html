@@ -122,11 +122,11 @@ in a <a href="srfi/148.macros.scm">file of the sample implementation</a>.
    (em-syntax-rules ()
      ((letrec ((var1 init1) ...) body ...)
       ((em-generate-temporaries '(var1 ...)) =&gt; '(temp1 ...))
-      '(let ((var1 &lt;undefined&gt;) ...)
-        (let ((temp1 init1) ...)
-            (set! var1 temp1)
-            ...
-            body ...)))))
+       (em '(let ((var1 &lt;undefined&gt;) ...)
+         (let ((temp1 init1) ...)
+             (set! var1 temp1)
+             ...
+             body ...))))))
 </pre>
 
 <h2>The <code>do</code>-iteration construct</h2>
@@ -140,7 +140,7 @@ in a <a href="srfi/148.macros.scm">file of the sample implementation</a>.
      ((do ((var init . step*) ...)
           (test expr ...)
         command ...)
-      `(letrec
+      (em `(letrec
            ((loop (lambda (var ...)
               (if test
                 (begin
@@ -153,7 +153,7 @@ in a <a href="srfi/148.macros.scm">file of the sample implementation</a>.
                                 'var
                                 (em-car 'step*)) 
                         ...))))))
-         (loop init ...)))))
+         (loop init ...))))))
 </pre>
 
 <h2>Pattern matcher</h2>
@@ -699,7 +699,17 @@ the following exceptions and additions:
     to be wrapped in <code>em</code> forms to ensure
     that this SRFI can be portably implemented.  If Scheme had
     a <code>let(rec)-syntax</code> form that spliced its body into the
-    outer scope, this auxiliary <code>em</code> wouldn't be necessary.</i>
+    outer scope, this auxiliary <code>em</code> wouldn't be necessary.
+  </i>
+</p>
+
+<p>Schemes that provide a splicing <code>let(rec)-syntax</code> form
+  can implement <code>em</code> as a no-op so that it can be omitted
+  and eager macro uses can appear equally in definition or expression
+  context.  It is recommended to actually require that <code>em</code> becomes
+  a no-op in a future Scheme standard, which provides a
+  splicing <code>let(rec)-form</code> and which includes the specification
+  of this SRFI.  In that case, <code>em</code> should become deprecated.
 </p>
 
 <p id="em-cut"><code>(em-cut &lt;slot or eager macro datum&gt;<sub>1</sub> &lt;slot or
