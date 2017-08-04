@@ -113,7 +113,7 @@
     ((syntax-rules (:c k ...) . args)
      (syntax-rules-aux "state0" :c (k ...) . args))
     ((syntax-rules)
-     (syntax-error "invalid syntax-rules syntax" U))))
+     (syntax-error "invalid syntax-rules syntax"))))
 
 (scheme-define-syntax syntax-rules-aux
   (scheme-syntax-rules ()
