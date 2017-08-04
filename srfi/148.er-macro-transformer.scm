@@ -20,9 +20,18 @@
 ;; CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ;; SOFTWARE.
 
-(define-library (srfi 147)
-  (export define-syntax
-	  let-syntax
-	  letrec-syntax
-	  syntax-rules)
-  (import (srfi 147 implementation)))
+(define-syntax free-identifier=?
+  (er-macro-transformer
+   (lambda (expr rename compare)
+     (if (compare (car (cdr expr))
+		  (cadr (cdr expr)))
+	 (caddr (cdr expr))
+	 (cadddr (cdr expr))))))
+
+(define-syntax bound-identifier=?
+  (er-macro-transformer
+   (lambda (expr rename compare)
+     (if (eq? (car (cdr expr))
+	      (cadr (cdr expr)))
+	 (caddr (cdr expr))
+	 (cadddr (cdr expr))))))

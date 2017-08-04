@@ -24,9 +24,11 @@
   (scheme-syntax-rules ()))
 
 (scheme-define-syntax expand-transformer
-  (scheme-syntax-rules (scheme-syntax-rules syntax-error begin)
+  (scheme-syntax-rules (scheme-syntax-rules scheme-er-macro-transformer syntax-error begin)
     ((expand-transformer (k ...) (scheme-syntax-rules . args))
      (k ... (scheme-syntax-rules . args)))
+    ((expand-transformer (k ...) (scheme-er-macro-transformer . args))
+     (k ... (scheme-er-macro-transformer . args)))
     ((expand-transformer (k ...) (syntax-error . args))
      (syntax-error . args))
     ((expand-transformer (k ...) (begin definition ... transformer-spec))
@@ -112,8 +114,8 @@
   (scheme-syntax-rules (:c)
     ((syntax-rules (:c k ...) . args)
      (syntax-rules-aux "state0" :c (k ...) . args))
-    ((syntax-rules)
-     (syntax-error "invalid syntax-rules syntax" U))))
+    ((syntax-rules . _)
+     (syntax-error "invalid syntax-rules syntax"))))
 
 (scheme-define-syntax syntax-rules-aux
   (scheme-syntax-rules ()
@@ -136,7 +138,7 @@
 	 (c ::: template)))
        rule3*))
     ((syntax-rules-aux . _)
-     (syntax-error "invalid syntax-rules syntax" _))))
+     (syntax-error "invalid syntax-rules syntax"))))
 
 
 ;; Local Variables:

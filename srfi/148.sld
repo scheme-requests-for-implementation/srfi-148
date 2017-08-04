@@ -162,6 +162,13 @@
 	  ...)
   (include-library-declarations "../custom-macro-transformers.scm")
   (import (srfi 26))
+  (cond-expand
+    (chibi
+     (import (scheme cxr))
+     (import (srfi 147 er-macro-transformer))
+     (include "148.er-macro-transformer.scm"))
+    (else
+     (include "148.identifier.scm")))
   (include "148.scm"
 	   "148.macros.scm"))
 

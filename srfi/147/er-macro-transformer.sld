@@ -20,9 +20,6 @@
 ;; CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ;; SOFTWARE.
 
-(define-library (srfi 147)
-  (export define-syntax
-	  let-syntax
-	  letrec-syntax
-	  syntax-rules)
+(define-library (srfi 147 er-macro-transformer)
+  (export er-macro-transformer)
   (import (srfi 147 implementation)))

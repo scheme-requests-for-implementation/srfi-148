@@ -20,9 +20,16 @@
 ;; CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ;; SOFTWARE.
 
-(define-library (srfi 147)
-  (export define-syntax
-	  let-syntax
-	  letrec-syntax
-	  syntax-rules)
-  (import (srfi 147 implementation)))
+(scheme-define-syntax er-macro-transformer
+  (scheme-syntax-rules (:c)
+    ((er-macro-transformer (:c k ...) transformer)
+     (k ... 
+	(scheme-er-macro-transformer
+	 (lambda (expr rename compare)
+	   (if (and (pair? (cdr expr))
+		    (pair? (cadr expr))
+		    (compare ':c (caadr expr)))
+	       `(,@(cdadr expr) ,(transformer (cons (car expr) (cddr expr)) rename compare))
+	       (transformer expr rename compare))))))
+    ((er-macro-transformer . _)
+     (syntax-error "invalid er-macro-transformer syntax"))))

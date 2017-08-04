@@ -20,9 +20,38 @@
 ;; CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ;; SOFTWARE.
 
-(define-library (srfi 147)
-  (export define-syntax
-	  let-syntax
-	  letrec-syntax
-	  syntax-rules)
-  (import (srfi 147 implementation)))
+(define-syntax free-identifier=?
+  (syntax-rules ()
+    ((free-identifier=? id1 id2 kt kf)
+     (begin
+       (define-syntax m
+	 (syntax-rules :::1 ()
+	   ((m %kt %kf)
+	    (begin
+	      (define-syntax test
+		(syntax-rules :::2 (id1)
+		  ((test id1 %%kt %%kf) %%kt)
+		  ((test x %%kt %%kf) %%kf)))
+	      (test id2 %kt %kf)))))
+       (m kt kf)))))
+
+(define-syntax bound-identifier=?
+  (syntax-rules ()
+    ((bound-identifier=? id v kt kf)
+     (begin
+       (define-syntax m
+	 (syntax-rules :::1 ()				       
+	   ((m %kt %kf)
+	    (begin
+	      (define-syntax id
+		(syntax-rules :::2 ()
+		  ((id %%kt %%kf) %%kf)))
+	      (define-syntax ok
+		(syntax-rules ()
+		  ((ok %%kt %%kf) %%kt)))
+	      (define-syntax test
+		(syntax-rules :::2 ()
+		  ((test v %%kt %%kf) (id %%kt %%kf))
+   	          ((test _ %%kt %%kf) (id %%kt %%kf))))
+	      (test ok %kt %kf)))))
+       (m kt kf)))))
