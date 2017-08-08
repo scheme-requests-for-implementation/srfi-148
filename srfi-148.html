@@ -260,7 +260,7 @@ well-known <code>syntax-rules</code>, namely of one of the two forms:
   form <code>'&lt;pattern&gt;</code>.  The output of an eager
   macro is handled as follows: If the template is of the
   form <code>'&lt;template&gt;</code>, the eager macro expands
-  into <code>&lt;template&gt;</code> (which the pattern variables
+  into <code>&lt;template&gt;</code> (with the pattern variables
   substituted); if the template is unquoted, the eager macro
   expands into the expansion of the template.  This behavior is
   analogous to how evaluation of quoted datums is handled in the core Scheme
@@ -302,7 +302,7 @@ well-known <code>syntax-rules</code>, namely of one of the two forms:
 </p>
 
 <p>
-  The following examples evaluates to the list <code>((1 x) (2 x) (3 x))</code>.
+  The following example evaluates to the list <code>((1 x) (2 x) (3 x))</code>.
 </p>
 
 <pre>
@@ -536,7 +536,7 @@ the following exceptions and additions:
   </li>
   <li>
     <p>
-      an eager macro use is only allowed in definition contexts, except when
+      An eager macro use is only allowed in definition contexts, except when
       the macro use or top-level template of the macro is wrapped
       into <code>em</code> (see also below) and does expand in an
       expression.
@@ -544,7 +544,7 @@ the following exceptions and additions:
   </li>
   <li>
     <p>
-      When <code>&lt;pattern binding spec&gt;</code>s appear in a
+      When <code>&lt;pattern binding spec&gt;</code>s appear in an
       eager macro rule that is matched, the <code>&lt;pattern binding
       spec&gt;</code>s are processed in left-to-right order before the final
       template of the rule is expanded: For each pattern binding
@@ -694,7 +694,7 @@ the following exceptions and additions:
 
 <p>Expands into the expansion of &lt;eager macro use&gt; with the
   additional property that it is allowed in an expression context.  It
-  is an error if &lt;eager macro use&gt; does not expand into a
+  is an error if &lt;eager macro use&gt; does not expand into an
   expression.</p>
 
 <p><i>Rationale: That eager macro uses that expand into expressions have
@@ -731,8 +731,8 @@ eager macro datum&gt;<sub>2</sub> ... &lt;&gt; &lt;ellipsis&gt;)</code></p>
     that are spliced in place of the sequence <code>&lt;&gt;
     &lt;ellipsis&gt</code>.  (The semantics are analogous to the
     semantics of the <code>cut</code> macro
-    except for that <code>&lt;...&gt;</code> is replaced by the
     of <a href="https://srfi.schemers.org/srfi-26/srfi-26.html">SRFI 26</a>,
+    except for the fact that <code>&lt;...&gt;</code> is replaced by the
     sequence <code>&lt;&gt; &lt;ellipsis&gt;</code>, which would not
     have been possible to implement when SRFI 26 was finalized).  It
     is an error to use <code>em-cut</code> standalone, that is, not as
@@ -811,14 +811,14 @@ eager macro datum&gt;<sub>2</sub> ... &lt;&gt; &lt;ellipsis&gt;)</code></p>
 <p id="em-gensym"><code>(em-gensym)</code></p>
 
 <p>Expands into a fresh identifier that is
-  not <code>em-bound-identifier=?</code> (see below) to any existing
-  already existing identifier.
+  not <code>em-bound-identifier=?</code> (see below) to any already
+  existing identifier.
 </p>
 
 <p id="em-generate-temporaries"><code>(em-generate-temporaries &lt;list&gt;)</code></p>
 
 <p>Expands into a list of pairwise different (in the sense of <code>bound-identifier=?</code>)
-  identifiers whose length is the number of elements in the expansion of <code>&lt;list&gt;</code>
+  identifiers whose length is the number of elements in the expansion of <code>&lt;list&gt;</code>.
   It is an error if <code>&lt;list&gt;</code> does not expand into a list.
 </p>
 
@@ -920,7 +920,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   symbols such that the identifiers denoted by them have the same
   meaning (in the expansion context), and into <code>#f</code>
   otherwise.  It is an error if <code>&lt;identifier&gt;<sub>1</sub></code>
-  and <code>&gt;identifier&lt;<sub>2</sub></code> do not expand into a
+  and <code>&lt;identifier&gt;<sub>2</sub></code> do not expand into a
   symbol.
 </p>
 
@@ -956,7 +956,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
 
 <p>
   Expands into a list whose elements are the expansions of the 
-  <code>&lt;elements&gt;</code>s.
+  <code>&lt;element&gt;</code>s.
 </p>
 
 <p id="em-make-list"><code>(em-make-list &lt;k&gt; &lt;element&gt;)</code></p>
@@ -1011,7 +1011,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   Expands into the first, second, third, ... element of the expansion
   of <code>&lt;list&gt;</code>.  It is an error
   if <code>&lt;list&gt;</code> does not expand into a list
-  of sufficient length.  (Analogously to <code>first</code>, ..., <code>tenth</code> from
+  of sufficient length.  (Analogous to <code>first</code>, ..., <code>tenth</code> from
   <a href="https://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>).
 </p>
 
@@ -1043,8 +1043,8 @@ expands into a vector literal, and into <code>#f</code> otherwise.
 
 <p>
   Expands into the sublist of the expansion
-  of <code>&lt;list&gt;</code> obtained by omitting as much elements
-  on the left as the expansion of <code>&lt;k&gt;<sub>2</sub></code>
+  of <code>&lt;list&gt;</code> obtained by omitting as many elements
+  on the left as the expansion of <code>&lt;k&gt;</code>
   has elements.  It is an error if <code>&lt;list&gt;</code>
   and <code>&lt;k&gt;</code> do not expand into lists.
   (<code>Em-drop</code> is an alternative name to <code>list-tail</code>, analogously
@@ -1120,7 +1120,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
 <p id="em-fold"><code>(em-fold &lt;proc&gt; &lt;nil&gt; &lt;list&gt; ...)</code></p>
 
 <p>
-  Expands into the expansion &lt;nil&gt; if at least one of
+  Expands into the expansion <code>&lt;nil&gt;</code> if at least one of
   the <code>&lt;list&gt;</code>s expands into the empty list.  Expands
   into the expansion of <code>(em-fold &lt;proc&gt; (em-call
   &lt;proc&gt; (em-car &lt;list&gt;) ... &lt;nil&gt;) (em-cdr
@@ -1136,7 +1136,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
 <p id="em-fold-right"><code>(em-fold-right &lt;proc&gt; &lt;nil&gt; &lt;list&gt; ...)</code></p>
 
 <p>
-  Expands into the expansion &lt;nil&gt; if at least one of
+  Expands into the expansion <code>&lt;nil&gt;</code> if at least one of
   the <code>&lt;list&gt;</code>s expands into the empty list.  Expands
   into the expansion of <code>(em-call &lt;proc&gt;
   (em-car &lt;list&gt;) ...  (em-fold-right &lt;proc&gt; &lt;nil&gt;
@@ -1173,7 +1173,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   of <code>(em-unfold-right &lt;stop?&gt; &lt;mapper&gt;
     &lt;successor&gt; (&lt;successor&gt; &lt;seed&gt;) (em-cons
     (&lt;mapper&gt; &lt;seed&gt;) &lt;tail&gt;))</code> otherwise.  If
-  &lt;tail&gt; is omitted, it defaults to <code>'()</code>.
+  <code>&lt;tail&gt;</code> is omitted, it defaults to <code>'()</code>.
   (Analogous to <code>unfold-right</code> from
   <a href="https://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
 </p>
@@ -1204,8 +1204,8 @@ expands into a vector literal, and into <code>#f</code> otherwise.
 
 <p id="em-filter"><code>(em-filter &lt;pred&gt; &lt;list&gt; ...)</code></p>
 
-<p>Expands into a list consisting of those elements <em>element</em>;
-  of the expansion of <code>&lt;list&gt;</code> in order, for
+<p>Expands into a list consisting of those elements <em>element</em>
+  of the expansion of <code>&lt;list&gt;</code>, in order, for
   which <code>(em-call &lt;pred&gt; <em>element</em>)</code> does not expand
   into <code>#f</code>.  It is an error if <code>&lt;list&gt;</code> does not expand into a list.
  (Analogous to <code>filter</code> from
@@ -1214,8 +1214,8 @@ expands into a vector literal, and into <code>#f</code> otherwise.
 
 <p id="em-remove"><code>(em-remove &lt;pred&gt; &lt;list&gt; ...)</code></p>
 
-<p>Expands into a list consisting of those elements <em>element</em>;
-  of the expansion of <code>&lt;list&gt;</code> in order for
+<p>Expands into a list consisting of those elements <em>element</em>
+  of the expansion of <code>&lt;list&gt;</code>, in order, for
   which <code>(em-call &lt;pred&gt; <em>element</em>)</code> expands
   into <code>#f</code>.  It is an error if <code>&lt;list&gt;</code> does not expand into a list.
  (Analogous to <code>remove</code> from
@@ -1234,7 +1234,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   It is an error if <code>&lt;list&gt;</code> does not expand into a list.
 
   (Analogous to <code>find</code> from
-  <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
+  <a href="https://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
 </p>
 
 <p id="em-find-tail"><code>(em-find-tail &lt;pred&gt; &lt;list&gt;)</code></p>
@@ -1407,7 +1407,7 @@ from <a href="https://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.
   <code>&lt;list&gt;</code>s,
   where <em>element<sub>1</sub></em> and <em>element<sub>2</sub></em>
   are considered equal
-  if <code>(em-call &lt;compare%gt; <em>element<sub>1</sub></em> <em>element<sub>2</sub></em>)</code>
+  if <code>(em-call &lt;compare&gt; <em>element<sub>1</sub></em> <em>element<sub>2</sub></em>)</code>
   does not expand into <code>#f</code>.  It is an error
   if <code>&lt;list&gt;<sub>1</sub></code> or any of
   the <code>&lt;list&gt;</code>s do not expand into a list.
@@ -1505,7 +1505,7 @@ from <a href="https://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.
 <p id="em-9"><code>(em-9)</code></p>
 <p id="em-10"><code>(em-10)</code></p>
 
-<p>Expands into a list of zero, one, two, ... pairwise different elements.</p>
+<p>Expands into a list of zero, one, two, ... ten pairwise different elements.</p>
 
 <p id="em="><code>(em= &lt;list&gt;<sub>1</sub> &lt;list&gt; ...)</code></p>
 
