@@ -20,7 +20,7 @@ Marc Nieper-Wi&szlig;kirchen
 
 <h1>Status</h1>
 
-<p>This SRFI is currently in <em>draft</em> status.  Here is <a href="http://srfi.schemers.org/srfi-process.html">an explanation</a> of each status that a SRFI can hold.  To provide input on this SRFI, please send email to <code><a href="mailto:srfi+minus+148+at+srfi+dotschemers+dot+org">srfi-148@<span class="antispam">nospam</span>srfi.schemers.org</a></code>.  To subscribe to the list, follow <a href="http://srfi.schemers.org/srfi-list-subscribe.html">these instructions</a>.  You can access previous messages via the mailing list <a href="http://srfi-email.schemers.org/srfi-148">archive</a>.</p>
+<p>This SRFI is currently in <em>draft</em> status.  Here is <a href="https://srfi.schemers.org/srfi-process.html">an explanation</a> of each status that a SRFI can hold.  To provide input on this SRFI, please send email to <code><a href="mailto:srfi+minus+148+at+srfi+dotschemers+dot+org">srfi-148@<span class="antispam">nospam</span>srfi.schemers.org</a></code>.  To subscribe to the list, follow <a href="https://srfi.schemers.org/srfi-list-subscribe.html">these instructions</a>.  You can access previous messages via the mailing list <a href="https://srfi-email.schemers.org/srfi-148">archive</a>.</p>
 <ul>
   <li>Received: 2016/12/31</li>
   <li>60-day deadline: 2017/3/2</li>
@@ -388,7 +388,7 @@ This SRFI extends 7.1 of the R7RS as follows:
 <p>
 The bindings of these three identifiers coincide with the bindings of
 these identifiers as exported
-from <code>(scheme base)</code> and <a href="http://srfi.schemers.org/srfi-26/srfi-26.html">SRFI
+from <code>(scheme base)</code> and <a href="https://srfi.schemers.org/srfi-26/srfi-26.html">SRFI
   26</a>, respectively.
 </p>
 
@@ -731,8 +731,8 @@ eager macro datum&gt;<sub>2</sub> ... &lt;&gt; &lt;ellipsis&gt;)</code></p>
     that are spliced in place of the sequence <code>&lt;&gt;
     &lt;ellipsis&gt</code>.  (The semantics are analogous to the
     semantics of the <code>cut</code> macro
-    of <a href="srfi.schemers.org/srfi-26/srfi-26.html">SRFI 26</a>,
     except for that <code>&lt;...&gt;</code> is replaced by the
+    of <a href="https://srfi.schemers.org/srfi-26/srfi-26.html">SRFI 26</a>,
     sequence <code>&lt;&gt; &lt;ellipsis&gt;</code>, which would not
     have been possible to implement when SRFI 26 was finalized).  It
     is an error to use <code>em-cut</code> standalone, that is, not as
@@ -751,7 +751,7 @@ eager macro datum&gt;<sub>2</sub> ... &lt;&gt; &lt;ellipsis&gt;)</code></p>
   resulting eager macro is expanded.
   (The semantics are analogous to the semantics of
     the <code>cute</code> macro
-  of <a href="srfi.schemers.org/srfi-26/srfi-26.html">SRFI 26</a>).
+  of <a href="https://srfi.schemers.org/srfi-26/srfi-26.html">SRFI 26</a>).
   It is an error to use <code>em-cute</code> standalone, that is, not
   as an input or output element of an eager macro.
 </p>
@@ -1012,7 +1012,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   of <code>&lt;list&gt;</code>.  It is an error
   if <code>&lt;list&gt;</code> does not expand into a list
   of sufficient length.  (Analogously to <code>first</code>, ..., <code>tenth</code> from
-  <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>).
+  <a href="https://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>).
 </p>
 
 <p id="em-list-tail"><code>(em-list-tail &lt;list&gt; &lt;k&gt;)</code></p>
@@ -1036,7 +1036,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   expansion of <code>&lt;k&gt;</code>.  It is an error
   if <code>&lt;list&gt;</code> and <code>&lt;k&gt;</code> do not
   expand into lists.  (Analogous to <code>take</code> from
-  <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
+  <a href="https://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
 </p>
 
 <p id="em-drop"><code>(em-drop &lt;list&gt; &lt;k&gt;)</code></p>
@@ -1049,7 +1049,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   and <code>&lt;k&gt;</code> do not expand into lists.
   (<code>Em-drop</code> is an alternative name to <code>list-tail</code>, analogously
   to <code>drop</code> from
-  <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
+  <a href="https://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
 </p>
 
 <p id="em-take-right"><code>(em-take-right &lt;list&gt;
@@ -1063,7 +1063,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   an error if <code>&lt;list&gt;</code>
   and <code>&lt;k&gt;</code> do not expand
   into lists.  (Analogous to <code>take-right</code> from
-  <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
+  <a href="https://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
 </p>
 
 <p id="em-drop-right"><code>(em-drop-right &lt;list&gt; &lt;k&gt;)</code></p>
@@ -1076,7 +1076,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   an error if <code>&lt;list&gt;</code>
   and <code>&lt;k&gt;</code> do not expand
   into lists.  (Analogous to <code>drop-right</code> from
-  <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
+  <a href="https://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
 </p>
 
 <p id="em-last"><code>(em-last &lt;pair&gt;)</code></p>
@@ -1085,7 +1085,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   of <code>&lt;pair&gt;</code>.  It is an error
   if <code>&lt;pair&gt;</code> does not expand into a (possibly
   dotted) list.  (Analogous to <code>last</code> from
-  <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
+  <a href="https://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
 <p>
 
 <p id="em-last-pair"><code>(em-last-pair &lt;pair&gt;)</code></p>
@@ -1094,7 +1094,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   of <code>&lt;pair&gt;</code>.  It is an error
   if <code>&lt;pair&gt;</code> does not expand into a (possibly
   dotted) list.  (Analogous to <code>last-pair</code> from
-  <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
+  <a href="https://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
 <p>
 
 <h4>Miscellaneous</h4>
@@ -1129,7 +1129,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   It is an error if the <code>&lt;list&gt;</code>s do not expand into lists.
 
   (Analogous to <code>fold</code>
-  from <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI
+  from <a href="https://srfi.schemers.org/srfi-1/srfi-1.html">SRFI
   1</a>.)
 </p>
 
@@ -1143,7 +1143,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   (em-cdr &lt;list&gt;) ...))</code> otherwise.  It is an error if
   the <code>&lt;list&gt;</code>s do not expand into lists.
   (Analogous to <code>fold-right</code>
-  from <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI
+  from <a href="https://srfi.schemers.org/srfi-1/srfi-1.html">SRFI
   1</a>.)
 </p>
 
@@ -1159,7 +1159,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
     &lt;tail-mapper&gt;)</code> otherwise.
   If <code>&lt;tail-mapper&gt;</code> is omitted, it defaults to <code>(em-constant '())</code>.
   (Analogous to <code>unfold</code> from
-  <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
+  <a href="https://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
 </p>
 
 <p id="em-unfold-right"><code>(em-unfold-right &lt;stop?&gt; &lt;mapper&gt; &lt;successor&gt;
@@ -1175,7 +1175,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
     (&lt;mapper&gt; &lt;seed&gt;) &lt;tail&gt;))</code> otherwise.  If
   &lt;tail&gt; is omitted, it defaults to <code>'()</code>.
   (Analogous to <code>unfold-right</code> from
-  <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
+  <a href="https://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
 </p>
 
 <p id="em-map"><code>(em-map &lt;proc&gt; &lt;list&gt; ...)</code></p>
@@ -1197,7 +1197,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
     (em-map &lt;proc&gt; &lt;tail&gt; ...))</code> if the <code>&lt;list&gt;</code>s expand into
   <code>(&lt;head&gt; . &lt;tail&gt;)</code>.
   (Analogous to <code>append-map</code> from
-  <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
+  <a href="https://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
 </p>
 
 <h4>Filtering</h4>
@@ -1209,7 +1209,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   which <code>(em-call &lt;pred&gt; <em>element</em>)</code> does not expand
   into <code>#f</code>.  It is an error if <code>&lt;list&gt;</code> does not expand into a list.
  (Analogous to <code>filter</code> from
-  <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)  
+  <a href="https://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)  
 </p>
 
 <p id="em-remove"><code>(em-remove &lt;pred&gt; &lt;list&gt; ...)</code></p>
@@ -1219,7 +1219,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   which <code>(em-call &lt;pred&gt; <em>element</em>)</code> expands
   into <code>#f</code>.  It is an error if <code>&lt;list&gt;</code> does not expand into a list.
  (Analogous to <code>remove</code> from
-  <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
+  <a href="https://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
 </p>
 
 <h4>Searching</h4>
@@ -1247,7 +1247,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   It is an error if <code>&lt;list&gt;</code> does not expand into a list.
 
   (Analogous to <code>find-tail</code> from
-  <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
+  <a href="https://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
 </p>
 
 <p id="em-take-while"><code>(em-take-while &lt;pred&gt; &lt;list&gt;)</code></p>
@@ -1260,7 +1260,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   It is an error if <code>&lt;list&gt;</code> does not expand into a list.
 
   (Analogous to <code>take-while</code> from
-  <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
+  <a href="https://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
 </p>
 
 <p id="em-drop-while"><code>(em-drop-while &lt;pred&gt; &lt;list&gt;)</code></p>
@@ -1273,7 +1273,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   It is an error if <code>&lt;list&gt;</code> does not expand into a list.
 
   (Analogous to <code>drop-while</code> from
-  <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
+  <a href="https://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
 </p>
 
 <p id="em-any"><code>(em-any &lt;pred&gt; &lt;list&gt; ...)</code></p>
@@ -1286,7 +1286,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   It is an error if <code>&lt;list&gt;</code> does not expand into a list.
 
   (Analogous to <code>em-any</code> from
-  <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
+  <a href="https://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
 </p>
 
 <p id="em-every"><code>(em-every &lt;pred&gt; &lt;list&gt; ...)</code></p>
@@ -1299,7 +1299,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   It is an error if <code>&lt;list&gt;</code> does not expand into a list.
 
   (Analogous to <code>em-any</code> from
-  <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
+  <a href="https://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
 </p>
 
 <p id="em-member"><code>(em-member &lt;obj&gt; &lt;list&gt; &lt;compare&gt;)</code></p>
@@ -1343,13 +1343,13 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   association list, a list of pairs.
 
   (Analogous to <code>em-alist-delete</code> from
-  <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
+  <a href="https://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
 </p>
 
 <h4>Set operations</h4>
 
 The following operations are analogous to the set operations on lists
-from <a href="http://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.
+from <a href="https://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.
 
 <p id="em-set<="><code>(em-set&lt;= &lt;compare&gt; &lt;list&gt ...)</code></p>
 
@@ -1659,7 +1659,7 @@ into the list with an odd number of elements, and into <code>#f</code> otherwise
 This SRFI comes with a <a href="srfi/148.sld">complete portable sample
 implementation</a> of this specification as an R7RS library.  The
 sample implementation is based
-on <a href="http://srfi.schemers.org/srfi-147/srfi-147.html">SRFI
+on <a href="https://srfi.schemers.org/srfi-147/srfi-147.html">SRFI
 147</a>, of which an implementation is included in this SRFI.
 Therefore, when using the sample implementation, one has to
 import <code>(srfi 147)</code> as well (as long as the Scheme system
@@ -1674,8 +1674,8 @@ does not support SRFI 147 natively).
 <p>
 The
 test suite also depends
-on <a href="http://srfi.schemers.org/srfi-2/srfi-2.html">SRFI 2</a>
-and <a href="http://srfi.schemers.org/srfi-64/srfi-64.html">SRFI
+on <a href="https://srfi.schemers.org/srfi-2/srfi-2.html">SRFI 2</a>
+and <a href="https://srfi.schemers.org/srfi-64/srfi-64.html">SRFI
 64</a>, for which suitable implementations are included as well.
 </p>
 
@@ -1703,14 +1703,14 @@ syntax-rules: macros that compose better</em></a>.
   There is a simple implementation of Oleg Kiselyov's idea by John Croisant as a <a href="http://wiki.call-cc.org/eggref/4/ck-macros">Chicken egg</a>.
 </p>
 
-<p><a href="http://srfi.schemers.org/srfi-53/srfi-53.html">SRFI 53</a>
+<p><a href="https://srfi.schemers.org/srfi-53/srfi-53.html">SRFI 53</a>
   by Andre van Tonder was an earlier try to "provide a portable
   framework for writing complex high-level macros that perform
   nontrivial computations during expansion".  At that time, the
   expressiveness of Scheme (in the form of the R5RS) wasn't sufficient
   enough to build a usable framework of that sort on top
   of <code>syntax-rules</code>
-  (see <a href="http://srfi-email.schemers.org/srfi-53/msg/2771559">this
+  (see <a href="https://srfi-email.schemers.org/srfi-53/msg/2771559">this
   message</a>).
 </p>
 
