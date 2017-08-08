@@ -641,7 +641,7 @@ the following exceptions and additions:
     <a href="#em-member">em-member</a>,
     <a href="#em-assoc">em-assoc</a>,
     <a href="#em-alist-delete">em-alist-delete</a>,
-    <a href="#em-set>=">em-set&lt;=</a>,
+    <a href="#em-set-le">em-set&lt;=</a>,
     <a href="#em-set=">em-set=</a>,
     <a href="#em-set-adjoin">em-set-adjoin</a>,
     <a href="#em-set-union">em-set-union</a>,
@@ -652,8 +652,8 @@ the following exceptions and additions:
   <li>
     <a href="#Vectorprocessing">Vector processing</a>:
     <a href="#em-vector">em-vector</a>,
-    <a href="#em-list->vector">em-list-&gt;vector</a>,
-    <a href="#em-vector->list">em-vector-&gt;list</a>,
+    <a href="#em-list-to-vector">em-list-&gt;vector</a>,
+    <a href="#em-vector-to-list">em-vector-&gt;list</a>,
     <a href="#em-vector-map">em-vector-map</a>,
     <a href="#em-vector-ref">em-vector-ref</a>,
   </li>
@@ -671,10 +671,10 @@ the following exceptions and additions:
     <a href="#em-9">em-9</a>,
     <a href="#em-10">em-10</a>,
     <a href="#em=">em=</a>,
-    <a href="#em<;">em&lt;</a>,
-    <a href="#em<=">em&lt;=</a>,
-    <a href="#em>">em&gt;</a>,
-    <a href="#em>=">em&gt;=</a>,
+    <a href="#em-lt">em&lt;</a>,
+    <a href="#em-le">em&lt;=</a>,
+    <a href="#em-gt">em&gt;</a>,
+    <a href="#em-ge">em&gt;=</a>,
     <a href="#em-zero?">em-zero?</a>,
     <a href="#em-even?">em-even?</a>,
     <a href="#em-odd?">em-odd?</a>,
@@ -729,7 +729,7 @@ eager macro datum&gt;<sub>2</sub> ... &lt;&gt; &lt;ellipsis&gt;)</code></p>
     syntax with <code>(... &lt;&gt; &lt;ellipsis&gt;)</code>, the
     resulting eager macro takes a variable number of extra input elements
     that are spliced in place of the sequence <code>&lt;&gt;
-    &lt;ellipsis&gt</code>.  (The semantics are analogous to the
+    &lt;ellipsis&gt;</code>.  (The semantics are analogous to the
     semantics of the <code>cut</code> macro
     of <a href="https://srfi.schemers.org/srfi-26/srfi-26.html">SRFI 26</a>,
     except for the fact that <code>&lt;...&gt;</code> is replaced by the
@@ -1086,7 +1086,6 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   if <code>&lt;pair&gt;</code> does not expand into a (possibly
   dotted) list.  (Analogous to <code>last</code> from
   <a href="https://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
-<p>
 
 <p id="em-last-pair"><code>(em-last-pair &lt;pair&gt;)</code></p>
 
@@ -1095,7 +1094,6 @@ expands into a vector literal, and into <code>#f</code> otherwise.
   if <code>&lt;pair&gt;</code> does not expand into a (possibly
   dotted) list.  (Analogous to <code>last-pair</code> from
   <a href="https://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.)
-<p>
 
 <h4>Miscellaneous</h4>
 
@@ -1164,7 +1162,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
 
 <p id="em-unfold-right"><code>(em-unfold-right &lt;stop?&gt; &lt;mapper&gt; &lt;successor&gt;
 &lt;seed&gt; &lt;tail&gt;)</code></p>
-<p id="em-"><code>(em-unfold-right &lt;stop?&gt; &lt;mapper&gt; &lt;successor&gt; &lt;seed&gt;)</code></p>
+<p><code>(em-unfold-right &lt;stop?&gt; &lt;mapper&gt; &lt;successor&gt; &lt;seed&gt;)</code></p>
 
 <p>
   Expands into the expansion of <code>&lt;tail&gt;</code>
@@ -1351,7 +1349,7 @@ expands into a vector literal, and into <code>#f</code> otherwise.
 The following operations are analogous to the set operations on lists
 from <a href="https://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.
 
-<p id="em-set<="><code>(em-set&lt;= &lt;compare&gt; &lt;list&gt ...)</code></p>
+<p id="em-set-le"><code>(em-set&lt;= &lt;compare&gt; &lt;list&gt; ...)</code></p>
 
 <p>Expands into <code>#t</code> if the elements of the expansion of
   the <code>&lt;list&gt;</code>s form an increasing tower of sets,
@@ -1362,7 +1360,7 @@ from <a href="https://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.
   the <code>&lt;list&gt;</code>s do not expand into a list.
 </p>
 
-<p id="em-set="><code>(em-set= &lt;compare&gt; &lt;list&gt;<sub>1</sub> &lt;list&gt ...)</code></p>
+<p id="em-set="><code>(em-set= &lt;compare&gt; &lt;list&gt;<sub>1</sub> &lt;list&gt; ...)</code></p>
 
 <p>Expands into <code>#t</code> if the elements of the expansion of
   the <code>&lt;list&gt;</code>s each form the same set as the
@@ -1454,7 +1452,7 @@ from <a href="https://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.
   Expands into a vector whose elements are the expansions of the <code>&lt;element&gt;</code>s.
 </p>
 
-<p id="em-list->vector"><code>(em-list-&gt;vector &lt;list&gt;)</code></p>
+<p id="em-list-to-vector"><code>(em-list-&gt;vector &lt;list&gt;)</code></p>
 
 <p>
   Expands into a vector whose elements are the elements of the
@@ -1462,7 +1460,7 @@ from <a href="https://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.
   if <code>&lt;list&gt;</code> does not expand into a (proper) list.
 </p>
 
-<p id="em-vector"><code>(em-vector-&gt;list &lt;vector&gt;)</code></p>
+<p id="em-vector-to-list"><code>(em-vector-&gt;list &lt;vector&gt;)</code></p>
 
 <p>
   Expands into a list whose elements are the elements of the
@@ -1519,7 +1517,7 @@ from <a href="https://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.
   into lists.
 </p>
 
-<p id="em<"><code>(em&lt; &lt;list&gt; ...)</code></p>
+<p id="em-lt"><code>(em&lt; &lt;list&gt; ...)</code></p>
 
 <p>
   Expands into <code>#t</code>
@@ -1529,7 +1527,7 @@ from <a href="https://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.
   do not expand into lists.
 </p>
 
-<p id="em<="><code>(em&lt;= &lt;list&gt; ...)</code></p>
+<p id="em-le"><code>(em&lt;= &lt;list&gt; ...)</code></p>
 
 <p>
   Expands into <code>#t</code>
@@ -1539,7 +1537,7 @@ from <a href="https://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.
   do not expand into lists.
 </p>
 
-<p id="em>"><code>(em&gt; &lt;list&gt; ...)</code></p>
+<p id="em-gt"><code>(em&gt; &lt;list&gt; ...)</code></p>
 
 <p>
   Expands into <code>#t</code>
@@ -1549,7 +1547,7 @@ from <a href="https://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a>.
   do not expand into lists.
 </p>
 
-<p id="em>="><code>(em&gt;= &lt;list&gt; ...)</code></p>
+<p id="em-ge"><code>(em&gt;= &lt;list&gt; ...)</code></p>
 
 <p>
   Expands into <code>#t</code>
