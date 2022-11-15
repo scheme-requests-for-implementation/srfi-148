@@ -1,4 +1,4 @@
-;; Copyright (C) Marc Nieper-Wißkirchen (2016).  All Rights Reserved. 
+;; Copyright (C) Marc Nieper-Wißkirchen (2016).  All Rights Reserved.
 
 ;; Permission is hereby granted, free of charge, to any person
 ;; obtaining a copy of this software and associated documentation
@@ -33,7 +33,7 @@
 
     (chibi
      (export er-macro-transformer)
-     (import (rename (only (chibi) er-macro-transformer display)
+     (import (rename (only (chibi) er-macro-transformer syntax-quote)
 		     (er-macro-transformer scheme-er-macro-transformer))
 	     (scheme cxr))
      (import (prefix (only (scheme base) let-syntax letrec-syntax) scheme-))
@@ -50,7 +50,7 @@
 	 (scheme-syntax-rules ()
 	   ((scheme-let-syntax bindings . body)
 	    (let () (let-syntax/splicing bindings . body)))))
-       
+
        (scheme-define-syntax scheme-letrec-syntax
 	 (scheme-syntax-rules ()
 	   ((scheme-letrec-syntax bindings . body)

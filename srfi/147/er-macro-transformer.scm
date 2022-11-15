@@ -1,4 +1,4 @@
-;; Copyright (C) Marc Nieper-Wißkirchen (2016).  All Rights Reserved. 
+;; Copyright (C) Marc Nieper-Wißkirchen (2016).  All Rights Reserved.
 
 ;; Permission is hereby granted, free of charge, to any person
 ;; obtaining a copy of this software and associated documentation
@@ -23,12 +23,12 @@
 (scheme-define-syntax er-macro-transformer
   (scheme-syntax-rules (:c)
     ((er-macro-transformer (:c k ...) transformer)
-     (k ... 
+     (k ...
 	(scheme-er-macro-transformer
 	 (lambda (expr rename compare)
 	   (if (and (pair? (cdr expr))
 		    (pair? (cadr expr))
-		    (compare ':c (caadr expr)))
+		    (compare (syntax-quote :c) (caadr expr)))
 	       `(,@(cdadr expr) ,(transformer (cons (car expr) (cddr expr)) rename compare))
 	       (transformer expr rename compare))))))
     ((er-macro-transformer . _)
